@@ -3,8 +3,7 @@
 
 `include "defines.v"
 
-module 
-();
+module tb();
 
 integer file,c,r;
 integer PC;
@@ -14,7 +13,7 @@ initial begin : fileblock
 PC = 0;
 $display("------------ISA Simulator---------------");
 file = fopen("memory.list","r");
-
+// checking if file is not empty or invalid
 if(file == `NULL) begin
 		disable fileblock;
 		$display("Error reading file");
