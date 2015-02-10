@@ -1,14 +1,17 @@
+
 `include "defines.v"
 module pdp();
 integer file,fileout;
-integer i;
+integer i,continue;
 reg [0:31]a;
-reg [0:11]PC,AC,MQ,MB,CPMA,SR;
+reg [0:11]PC,MQ,MB,CPMA,SR;
+reg [0:11]AC;
 reg [0:2] IR;
 reg LinkBit;
 reg [0:11] my_memory [0:4096];
 reg [0:4] page;
 reg [0:6] offset;
+reg [0:1] i_m;// to store i and m bits of instruction
 
 parameter AND = 3'd0,
 	  TAD= 3'd1,
@@ -25,23 +28,31 @@ $display("------------ISA Simulator---------------");
 initialize();
 page=PC[0:4];
 offset=PC[5:11];
+continue=1;
+
 fileout=$fopen("output.txt","w");
-while(my_memory[PC]!=12'hf02)
+while(my_memory[PC]!=12'hf02&&continue==1)
 	begin
 	$display("%h",my_memory[PC]);
 	
-	IR=my_memory[PC][0:2];
+	MemoryRead(0);// 0 indicates that we are fetching instruction and we write 1 when we want data
 	case(IR)
 	   AND: begin
-		$display("works");
+		MemoryRead(1);// to get the contents of effective address
+		AC=AC&MB;
+		$display("works1");
 		end
 	   TAD: begin
+		
 		$display("works");
 		end
 	   ISZ: begin
+		
 		$display("works");
 		end
 	   DCA: begin
+		MemoryWrite(AC);
+		AC=0;
 		$display("works");
 		end
 	   JMS: begin
@@ -144,9 +155,20 @@ end
 endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------
 task MemoryRead;
-input [0:1] i_m;
+input i;
+integer i;
 
 begin
+if(i==0)// instruction fetch
+	begin
+        IR=my_memory[PC][0:2];
+	i_m=my_memory[PC][3:4];
+	offset=my_memory[PC][5:11];// this offset will be used in effective address calculation
+	 $fwrite(fileout,"%d %h",2,PC);
+	end
+else
+begin
+
 if(i_m==2'b00)
 	CPMA={5'b00000,offset};
 else if(i_m==2'b01)
@@ -179,11 +201,15 @@ MB=my_memory[CPMA];
 
 $fwrite(fileout,"%d %h",0,CPMA);
 end
+end
 endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------
-//task MemoryWrite;
-
-
-
-//endtask
+task MemoryWrite;
+input reg [0:11] out_data; 
+begin
+MB=out_data;
+my_memory[CPMA]=MB;
+$fwrite(fileout,"%d %h",1,CPMA);
+end
+endtask
 endmodule
