@@ -1,3 +1,23 @@
+integer file,fileout;
+integer i,continue;
+reg [0:31]a;
+reg [0:11]PC,MQ,MB,CPMA,SR;
+reg [0:11]AC;
+reg [0:2] IR;
+reg LinkBit;
+reg [0:11] my_memory [0:4096];
+reg [0:4] page;
+reg [0:6] offset;
+reg [0:1] i_m;// to store i and m bits of instruction
+
+parameter AND = 3'd0,
+	  TAD= 3'd1,
+	  ISZ= 3'd2, 
+	  DCA= 3'd3,
+	  JMS= 3'd4,
+	  JMP= 3'd5,
+	  IO= 3'd6,
+	  M_INSTRUCTIONS= 3'd7;
 /*-----------------------------------------------Parameters-------------------------------------*/
 //-------------------------------Keyboard - Device #3
 parameter KCF = 12'o6030;					//Clear Keyboard Flag
@@ -16,38 +36,43 @@ parameter SKON = 12'o6000;					//Skip if the interrupt system is on and turn the
 parameter ION = 12'o6001;					//Execute the next instruction then turn the interrupt system on
 parameter IOF = 12'o6002;					//Turn the interrupt system off
 //--------------------------Group 1 Microinstructions (Bit 3 = 0)
-parameter NOP = 12'o7000;					//No Operation
-parameter CLA = 12'o7200;					//CLear Accumulator (1)
-parameter CLL = 12'o7100;					//CLear Link (1)
-parameter CMA = 12'o7040;					//CoMplement Accumulator (2)
-parameter CML = 12'o7020;					//CoMplement Link (2)
-parameter IAC = 12'o7001;					//Increment ACumulator (3)
-parameter RAR = 12'o7010;					//Rotate Accumulator and link Right (4)
-parameter RTR = 12'o7012;					//Rotate accumulator and link Right Twice (4)
-parameter RAL = 12'o7004;					//Rotate Accumulator and link Left (4)
-parameter RTL = 12'o7006;					//Rotate Accumulator and link left Twice (4)
-//-------------------------Group 2 Microinstructions (Bit 3 = 1, Bit 11 = 0) 
-parameter SMA = 12'o7500;					//Skip on Minus Accumulator (1)
-parameter SZA = 12'o7440;					//Skip on Zero Accumulator (1)
-parameter SNL = 12'o7420;					//Skip on Nonzero Link (1)
-parameter SPA = 12'o7510;					//Skip on Positive Accumulator (1)
-parameter SNA = 12'o7450;					//Skip on Nonzero Accumulator (1)
-parameter SZL = 12'o7430;					//Skip on Zero Link (1)
-parameter SKP = 12'o7410;					//SKiP always (1)
-parameter CLA = 12'o7600;					//CLear Accumulator (2)
-parameter OSR = 12'o7404;					//Or Switch Register with accumulator (3)
-parameter HLT = 12'o7402;					//HaLT (3)
-//-------------------------Group 3 Microinstructions (Bit 3 = 1, Bit 11 = 1) 
-//parameter CLA = 12'o7601;					//CLear Accumulator (1)
-parameter MQL = 12'o7421;					//Load MQ register from AC and Clear AC (2); C(MQ) <- C(AC); C(AC) <- 0;
-parameter MQA = 12'o7501;					//Or AC with MQ register (2) ; C(AC) <- C(AC) Or C(MQ)
-parameter SWP = 12'o7521;					//SWap AC and MQ registers (3)
-parameter CAM = 12'o7621;					//Clear AC and MQ registers (3)
+reg NOP;					//No Operation
+reg CLA;					//CLear Accumulator (1)
+reg CLL;					//CLear Link (1)
+reg CMA;					//CoMplement Accumulator (2)
+reg CML;					//CoMplement Link (2)
+reg IAC;					//Increment ACumulator (3)
+reg RAR;					//Rotate Accumulator and link Right (4)
+reg RTR;					//Rotate accumulator and link Right Twice (4)
+reg RAL;					//Rotate Accumulator and link Left (4)
+reg RTL;					//Rotate Accumulator and link left Twice (4)
+//-------Group 2 Microinstructions (Bit 3 = 1, Bit 11 = 0) 
+reg SMA;					//Skip on Minus Accumulator (1)
+reg SZA;					//Skip on Zero Accumulator (1)
+reg SNL;					//Skip on Nonzero Link (1)
+reg SPA;					//Skip on Positive Accumulator (1)
+reg SNA;					//Skip on Nonzero Accumulator (1)
+reg SZL;					//Skip on Zero Link (1)
+reg SKP;					//SKiP always (1)
+reg CLA;					//CLear Accumulator (2)
+reg OSR;					//Or Switch Register with accumulator (3)
+reg HLT;					//HaLT (3)
+//-------Group 3 Microinstructions (Bit 3 = 1, Bit 11 = 1) 
+reg CLA;					//CLear Accumulator (1)
+reg MQL;					//Load MQ register from AC and Clear AC (2); C(MQ) <- C(AC); C(AC) <- 0;
+reg MQA;					//Or AC with MQ register (2) ; C(AC) <- C(AC) Or C(MQ)
+reg SWP;					//SWap AC and MQ registers (3)
+reg CAM;					//Clear AC and MQ registers (3)
+
 
 task Group2MicroInstructions;   
+if(my_memory[PC] == 
+
+
 begin
-if(my_memory[PC][8] == 1'b0) begin
+if(my_memory[PC][8] == 1'b0) begin						// OR SubGroup
 	if(my_memory[PC][5] == 1'b1 && AC[0] == 1'b1)   	//Skip Minus Accumulator
+		i_sma = true
 		PC = PC + 1'b1;
 	if(my_memory[PC][6] == 1'b1 && AC == 0) 			//Skip Zero Accumulator
 		PC = PC + 1'b1;
