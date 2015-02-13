@@ -44,13 +44,6 @@ parameter MQA = 12'o7501;					//Or AC with MQ register (2) ; C(AC) <- C(AC) Or C
 parameter SWP = 12'o7521;					//SWap AC and MQ registers (3)
 parameter CAM = 12'o7621;					//Clear AC and MQ registers (3)
 
- 
- 
- 
- 
- 
- 
- 
 task Group2MicroInstructions;   
 begin
 if(my_memory[PC][8] == 1'b0) begin
