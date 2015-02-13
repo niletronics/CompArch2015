@@ -52,6 +52,7 @@ while(my_memory[PC]!=12'hf02&&continue==1)
 		MemoryWrite(MB);
 		if(MB==0)
 		    PC=PC+1;
+		$display("works");
 		end
 	   DCA: begin
 		MemoryWrite(AC);
