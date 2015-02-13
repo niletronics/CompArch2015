@@ -20,21 +20,21 @@ parameter AND = 3'd0,
 	  M_INSTRUCTIONS= 3'd7;
 /*-----------------------------------------------Parameters-------------------------------------*/
 //-------------------------------Keyboard - Device #3
-parameter KCF = 12'o6030;					//Clear Keyboard Flag
-parameter KSF = 12'o6031;					//Skip on Keyboard Flag set
-parameter KCC = 12'o6032;					//Clear Keyboard flag and aCcumulator
-parameter KRS = 12'o6034;					//Read Keyboard buffer Static AC4..AC11 <- AC4..AC11 OR Keyboard Buffer
-parameter KRB = 12'o6036;					//Read Keyboard Buffer dynamic C(AC) <- 0; Keyboard Flag <- 0; AC4..AC11 <- AC4..AC11 OR Keyboard Buffer
+parameter i_KCF = 12'o6030;					//Clear Keyboard Flag
+parameter i_KSF = 12'o6031;					//Skip on Keyboard Flag set
+parameter i_KCC = 12'o6032;					//Clear Keyboard flag and aCcumulator
+parameter i_KRS = 12'o6034;					//Read Keyboard buffer Static AC4..AC11 <- AC4..AC11 OR Keyboard Buffer
+parameter i_KRB = 12'o6036;					//Read Keyboard Buffer dynamic C(AC) <- 0; Keyboard Flag <- 0; AC4..AC11 <- AC4..AC11 OR Keyboard Buffer
 //----------------------------Printer (CRT) - Device #4
-parameter TFL = 12'o6040;					//set prinTer FLag
-parameter TSF = 12'o6041;					//Skip on prinTer Flag set
-parameter TCF = 12'o6042;					//Clear prinTer Flag
-parameter TPC = 12'o6044;					//load prinTer buffer with aCcumulator and Print Printer Buffer <- AC4-11
-parameter TLS = 12'o6046;					//Load prinTer Sequence ; Printer Flag <- 0; Printer Buffer <- AC4-11 
+parameter i_TFL = 12'o6040;					//set prinTer FLag
+parameter i_TSF = 12'o6041;					//Skip on prinTer Flag set
+parameter i_TCF = 12'o6042;					//Clear prinTer Flag
+parameter i_TPC = 12'o6044;					//load prinTer buffer with aCcumulator and Print Printer Buffer <- AC4-11
+parameter i_TLS = 12'o6046;					//Load prinTer Sequence ; Printer Flag <- 0; Printer Buffer <- AC4-11 
 //--------------------------Interrupt System - Device #0
-parameter SKON = 12'o6000;					//Skip if the interrupt system is on and turn the interrupt system off
-parameter ION = 12'o6001;					//Execute the next instruction then turn the interrupt system on
-parameter IOF = 12'o6002;					//Turn the interrupt system off
+parameter i_SKON = 12'o6000;				//Skip if the interrupt system is on and turn the interrupt system off
+parameter i_ION = 12'o6001;					//Execute the next instruction then turn the interrupt system on
+parameter i_IOF = 12'o6002;					//Turn the interrupt system off
 //--------------------------Group 1 Microinstructions (Bit 3 = 0)
 reg NOP;					//No Operation
 reg CLA;					//CLear Accumulator (1)
@@ -66,8 +66,11 @@ reg CAM;					//Clear AC and MQ registers (3)
 
 
 task Group2MicroInstructions;   
-if(my_memory[PC] == 
-
+if(my_memory[PC] ==? 111_1?0_001_??0)	SKP	<=1'b1;
+if(my_memory[PC] ==? 111_11?_???_??0)	CLA	<=1'b1;
+if(my_memory[PC] ==? 111_1??_???_1?0)	OSR	<=1'b1;
+if(my_memory[PC] ==? 111_1??_???_?10)	HLT	<=1'b1;
+										      
 
 begin
 if(my_memory[PC][8] == 1'b0) begin						// OR SubGroup
