@@ -35,6 +35,20 @@ parameter i_TLS = 12'o6046;					//Load prinTer Sequence ; Printer Flag <- 0; Pri
 parameter i_SKON = 12'o6000;				//Skip if the interrupt system is on and turn the interrupt system off
 parameter i_ION = 12'o6001;					//Execute the next instruction then turn the interrupt system on
 parameter i_IOF = 12'o6002;					//Turn the interrupt system off
+//----------------Register Declaration for InputOutputInst ---------------------//
+reg KCF  =1'b0;	
+reg KSF  =1'b0;
+reg KCC  =1'b0;
+reg KRS  =1'b0;
+reg KRB  =1'b0;
+reg TFL  =1'b0;
+reg TSF  =1'b0;
+reg TCF  =1'b0;
+reg TPC  =1'b0;
+reg TLS  =1'b0;
+reg SKON =1'b0;
+reg ION  =1'b0;
+reg IOF  =1'b0;
 //--------------------------Group 1 Microinstructions (Bit 3 = 0)
 reg NOP = 1'b0;					//No Operation
 reg CLA = 1'b0;					//CLear Accumulator (1)
@@ -65,6 +79,29 @@ reg SWP = 1'b0;					//SWap AC and MQ registers (3)
 reg CAM = 1'b0;					//Clear AC and MQ registers (3)
 reg ORSubgroup =1'b0;			// Condition for ORSubGroup 1'b1 = True, 1'b0 = False
 reg ANDSubgroup =1'b0;			// Condition for ANDSubgroup  1'b1 = True, 1'b0 = False
+
+task InputOutputInst;
+begin
+
+if(my_memory[PC] == i_KCF) begin KCF <=1'b1; /* $display("KCF "); */ end
+if(my_memory[PC] == i_KSF) begin KSF <=1'b1; /* $display("KSF "); */ end
+if(my_memory[PC] == i_KCC) begin KCC <=1'b1; /* $display("KCC "); */ end
+if(my_memory[PC] == i_KRS) begin KRS <=1'b1; /* $display("KRS "); */ end
+if(my_memory[PC] == i_KRB) begin KRB <=1'b1; /* $display("KRB "); */ end
+                         
+if(my_memory[PC] == i_TFL) begin TFL <=1'b1; /* $display("TFL "); */ end
+if(my_memory[PC] == i_TSF) begin TSF <=1'b1; /* $display("TSF "); */ end
+if(my_memory[PC] == i_TCF) begin TCF <=1'b1; /* $display("TCF "); */ end
+if(my_memory[PC] == i_TPC) begin TPC <=1'b1; /* $display("TPC "); */ end
+if(my_memory[PC] == i_TLS) begin TLS <=1'b1; /* $display("TLS "); */ end
+                         
+if(my_memory[PC]== i_SKON) begin SKON<=1'b1; /* $display("SKON"); */ end
+if(my_memory[PC] == i_ION) begin ION <=1'b1; /* $display("ION "); */ end
+if(my_memory[PC] == i_IOF) begin IOF <=1'b1; /* $display("IOF "); */ end
+                                   
+
+
+end
 
 task Group2MicroInstructions;   
 begin
