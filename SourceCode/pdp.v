@@ -224,6 +224,7 @@ if(i==0)// instruction fetch
         IR=my_memory[PC][0:2];
 	i_m=my_memory[PC][3:4];
 	offset=my_memory[PC][5:11];// this offset will be used in effective address calculation
+	page=PC[0:4];
 	 $fwrite(fileout,"%d %o \n",2,PC);
 	end
 else
