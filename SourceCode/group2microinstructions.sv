@@ -66,13 +66,23 @@ reg CAM;					//Clear AC and MQ registers (3)
 
 
 task Group2MicroInstructions;   
-if(my_memory[PC] ==? 111_1?0_001_??0)	SKP	<=1'b1;
-if(my_memory[PC] ==? 111_11?_???_??0)	CLA	<=1'b1;
-if(my_memory[PC] ==? 111_1??_???_1?0)	OSR	<=1'b1;
-if(my_memory[PC] ==? 111_1??_???_?10)	HLT	<=1'b1;
-										      
-
 begin
+
+if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	<=1'b1; $display("SKP"); end
+if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	<=1'b1; $display("CLA"); end
+if(my_memory[PC] ==? 12'b111_1??_???_1?0) begin	OSR	<=1'b1; $display("OSR"); end
+if(my_memory[PC] ==? 12'b111_1??_???_?10) begin	HLT	<=1'b1; $display("HLT"); end
+if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	<=1'b1; $display("SMA"); end
+if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	<=1'b1; $display("SZA"); end
+if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	<=1'b1; $display("SNL"); end
+if(my_memory[PC] ==? 12'b111_100_000_000) begin	NOP	<=1'b1; $display("NOP"); end
+if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	<=1'b1; $display("SPA"); end
+if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	<=1'b1; $display("SNA"); end
+if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	<=1'b1; $display("SZL"); end
+
+if((SMA && AC[0]=1'b1) || (SZA && AC == 0) || (SNL && LinkBit==1'b1) PC++;
+ 
+ /*
 if(my_memory[PC][8] == 1'b0) begin						// OR SubGroup
 	if(my_memory[PC][5] == 1'b1 && AC[0] == 1'b1)   	//Skip Minus Accumulator
 		i_sma = true
@@ -82,8 +92,9 @@ if(my_memory[PC][8] == 1'b0) begin						// OR SubGroup
 	if(my_memory[PC][7] == 1'b1 && LinkBit == 1'b1)  	//Skip Non-zero Link
 		PC = PC + 1'b1;
 end
-     
-	
+*/
+
+if(
 if(my_memory[PC][8] == 1'b1) begin												//AND subgroup
 	if(my_memory[PC] == 12'b111_101_001_000 && AC[0] == 1'b0)					//Skip Positive Accumulator
 		PC = PC + 1'b1;
