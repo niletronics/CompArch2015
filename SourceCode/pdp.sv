@@ -2,12 +2,12 @@
 `include "defines.v"
 module pdp();
 integer file,fileout;
-integer i,go;
+integer i;
 reg [0:31]a;
 reg [0:11]PC,MQ,MB,CPMA,SR;
 reg [0:11]AC;
 reg [0:2] IR;
-reg LinkBit;
+reg LinkBit,go;
 reg [0:11] my_memory [0:4096];
 reg [0:4] page;
 reg [0:6] offset;
@@ -89,9 +89,9 @@ initializeVariables();
 initialize();
 page=PC[0:4];
 offset=PC[5:11];
-go=1;
+go=1'b1;
 fileout=$fopen("output.txt","w");
-while(my_memory[PC]!=12'hf02&&go==1)
+while(my_memory[PC]!=12'hf02&&go==1'b1)
 	begin
 	$display("%h",my_memory[PC]);
 	
