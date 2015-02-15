@@ -1,24 +1,4 @@
-integer file,fileout;
-integer i,continue;
-reg [0:31]a;
-reg [0:11]PC,MQ,MB,CPMA,SR;
-reg [0:11]AC;
-reg [0:2] IR;
-reg LinkBit;
-reg [0:11] my_memory [0:4096];
-reg [0:4] page;
-reg [0:6] offset;
-reg [0:1] i_m;// to store i and m bits of instruction
-
-parameter AND = 3'd0,
-	  TAD= 3'd1,
-	  ISZ= 3'd2, 
-	  DCA= 3'd3,
-	  JMS= 3'd4,
-	  JMP= 3'd5,
-	  IO= 3'd6,
-	  M_INSTRUCTIONS= 3'd7;
-/*-----------------------------------------------Parameters-------------------------------------*/
+`include "pdp.sv"
 //-------------------------------Keyboard - Device #3
 parameter i_KCF = 12'o6030;					//Clear Keyboard Flag
 parameter i_KSF = 12'o6031;					//Skip on Keyboard Flag set
@@ -68,11 +48,11 @@ reg SPA = 1'b0;					//Skip on Positive Accumulator (1)
 reg SNA = 1'b0;					//Skip on Nonzero Accumulator (1)
 reg SZL = 1'b0;					//Skip on Zero Link (1)
 reg SKP = 1'b0;					//SKiP always (1)
-reg CLA = 1'b0;					//CLear Accumulator (2)
+//reg CLA = 1'b0;					//CLear Accumulator (2)
 reg OSR = 1'b0;					//Or Switch Register with accumulator (3)
 reg HLT = 1'b0;					//HaLT (3)
 //-------Group 3 Microinstructions (Bit 3 = 1, Bit 11 = 1) 
-reg CLA = 1'b0;					//CLear Accumulator (1)
+//reg CLA = 1'b0;					//CLear Accumulator (1)
 reg MQL = 1'b0;					//Load MQ register from AC and Clear AC (2); C(MQ) <- C(AC); C(AC) <- 0;
 reg MQA = 1'b0;					//Or AC with MQ register (2) ; C(AC) <- C(AC) Or C(MQ)
 reg SWP = 1'b0;					//SWap AC and MQ registers (3)
@@ -80,7 +60,8 @@ reg CAM = 1'b0;					//Clear AC and MQ registers (3)
 reg ORSubgroup =1'b0;			// Condition for ORSubGroup 1'b1 = True, 1'b0 = False
 reg ANDSubgroup =1'b0;			// Condition for ANDSubgroup  1'b1 = True, 1'b0 = False
 
-task InputOutputInst;
+
+	task InputOutputInst;
 begin
 
 if(my_memory[PC] == i_KCF) begin KCF <=1'b1; /* $display("KCF "); */ end
@@ -99,9 +80,8 @@ if(my_memory[PC]== i_SKON) begin SKON<=1'b1; /* $display("SKON"); */ end
 if(my_memory[PC] == i_ION) begin ION <=1'b1; /* $display("ION "); */ end
 if(my_memory[PC] == i_IOF) begin IOF <=1'b1; /* $display("IOF "); */ end
                                    
-
-
 end
+endtask
 
 task Group2MicroInstructions;   
 begin
@@ -126,8 +106,8 @@ begin
 	if(CLA) AC = 12'b0;							// Priority (2)
 	if(OSR) AC = (AC | SR);						// Priority (3)
 	if(HLT);									// Priority (3) //Assuming HLT should be executed as the last instruction 
+end
 endtask
-	
 	
  /*
 if(my_memory[PC][8] == 1'b0) begin						// OR SubGroup
