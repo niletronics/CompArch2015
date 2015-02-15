@@ -210,7 +210,7 @@ if(file == `NULL)
 	end
 else 
 	begin	
-	$readmemh("add01.mem", my_memory);
+	$readmemh("CLA1.mem", my_memory);
 	/*for(i=0;i<4095;i=i+1)  // to display contents of memory
 	   begin
 	   if(my_memory[i]!==12'hxxx)
@@ -336,7 +336,7 @@ begin
 	if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	<=1'b1; $display("SMA"); end else SMA	<=1'b0;
 	if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	<=1'b1; $display("SZA"); end else SZA	<=1'b0;
 	if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	<=1'b1; $display("SNL"); end else SNL	<=1'b0;
-	if(my_memory[PC] ==? 12'b111_100_000_000) begin	NOP	<=1'b1; $display("NOP"); end else NOP	<=1'b0;
+	if(my_memory[PC] ==  12'b111_100_000_000) begin	NOP	<=1'b1; $display("NOP"); end else NOP	<=1'b0;
 	if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	<=1'b1; $display("SPA"); end else SPA	<=1'b0;
 	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	<=1'b1; $display("SNA"); end else SNA	<=1'b0;
 	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	<=1'b1; $display("SZL"); end else SZL	<=1'b0;
@@ -346,10 +346,11 @@ begin
 	
 	if(ORSubgroup || ANDSubgroup || SKP) PC++; 						//OR SubGroup, later combining common case
 	//if(ANDSubgroup) PC++;						// AND SubGroup
-	//if(SKP) PC++;								// Priority(1)
-	if(CLA) AC = 12'b0;							// Priority (2)
+	//if(SKP) PC++;							// Priority(1)
+	if(CLA) AC = 12'b0;						// Priority (2)
 	if(OSR) AC = (AC | SR);						// Priority (3)
-	if(HLT) go = 1'b1;									// Priority (3) //Assuming HLT should be executed as the last instruction 
+	if(NOP) $display("NOP is encounter at PC = %h and Memory= %o",PC,my_memory[PC]);
+	if(HLT) go = 1'b1;						// Priority (3) //Assuming HLT should be executed as the last instruction 
 end
 endtask
 
