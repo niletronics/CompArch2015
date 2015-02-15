@@ -1,8 +1,9 @@
 //ONE FROM GITHUB
+`include "group2microinstructions.sv"
 `include "defines.v"
 module pdp();
 integer file,fileout;
-integer i,continue;
+integer i,go;
 reg [0:31]a;
 reg [0:11]PC,MQ,MB,CPMA,SR;
 reg [0:11]AC;
@@ -28,10 +29,10 @@ initializeVariables();
 initialize();
 page=PC[0:4];
 offset=PC[5:11];
-continue=1;
-
+go=1;
+Group2MicroInstructions();
 fileout=$fopen("output.txt","w");
-while(my_memory[PC]!=12'hf02&&continue==1)
+while(my_memory[PC]!=12'hf02&&go==1)
 	begin
 	$display("%h",my_memory[PC]);
 	
@@ -133,8 +134,8 @@ if(flag==0)
 	//$display("dec address %d",decaddr);
 	end
 else
-	decaddr=5000;
-
+	decaddr=5000;// not a vaild address.
+	
 end
 endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -169,7 +170,7 @@ else
 	   PC=128;
 	end
 $display("PC is %d",PC);
-
+// to do: close the filee.
 end
 endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------

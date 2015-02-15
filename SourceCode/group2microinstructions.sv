@@ -105,17 +105,17 @@ end
 
 task Group2MicroInstructions;   
 begin
-	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	<=1'b1; /*$display("SKP");*/ end
-	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	<=1'b1; /*$display("CLA");*/ end
-	if(my_memory[PC] ==? 12'b111_1??_???_1?0) begin	OSR	<=1'b1; /*$display("OSR");*/ end
-	if(my_memory[PC] ==? 12'b111_1??_???_?10) begin	HLT	<=1'b1; /*$display("HLT");*/ end
-	if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	<=1'b1; /*$display("SMA");*/ end
-	if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	<=1'b1; /*$display("SZA");*/ end
-	if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	<=1'b1; /*$display("SNL");*/ end
-	if(my_memory[PC] ==? 12'b111_100_000_000) begin	NOP	<=1'b1; /*$display("NOP");*/ end
-	if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	<=1'b1; /*$display("SPA");*/ end
-	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	<=1'b1; /*$display("SNA");*/ end
-	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	<=1'b1; /*$display("SZL");*/ end
+	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	<=1'b1; /*$display("SKP");*/ end else SKP	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	<=1'b1; /*$display("CLA");*/ end else CLA	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_???_1?0) begin	OSR	<=1'b1; /*$display("OSR");*/ end else OSR	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_???_?10) begin	HLT	<=1'b1; /*$display("HLT");*/ end else HLT	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	<=1'b1; /*$display("SMA");*/ end else SMA	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	<=1'b1; /*$display("SZA");*/ end else SZA	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	<=1'b1; /*$display("SNL");*/ end else SNL	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_100_000_000) begin	NOP	<=1'b1; /*$display("NOP");*/ end else NOP	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	<=1'b1; /*$display("SPA");*/ end else SPA	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	<=1'b1; /*$display("SNA");*/ end else SNA	<=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	<=1'b1; /*$display("SZL");*/ end else SZL	<=1'b0;
 	//Condition checking for SubGroup
 	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup <=1'b1;
 	if((SPA && AC[0]==1'b0) && (SNA && AC != 12'b0) && (SZA && LinkBit==1'b0)) ANDSubgroup <=1'b1;
