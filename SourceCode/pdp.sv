@@ -91,22 +91,25 @@ page=PC[0:4];
 offset=PC[5:11];
 go=1'b1;
 fileout=$fopen("output.txt","w");
-while(my_memory[PC]!=12'hf02&&go==1'b1)
+while(go==1'b1)
 	begin
 	$display("%h",my_memory[PC]);
 	
 	MemoryRead(0);// 0 indicates that we are fetching instruction and we write 1 when we want data
-	effectiveAddress();// to calculate effective address
+	
 	case(IR)
 	   AND: begin
+		effectiveAddress();// to calculate effective address
 		MemoryRead(1);// to get the contents of effective address
 		AC=AC&MB;
 		end
 	   TAD: begin
+		effectiveAddress();// to calculate effective address
 		MemoryRead(1);
 		{LinkBit,AC}={LinkBit,AC}+MB;
 		end
 	   ISZ: begin
+		effectiveAddress();// to calculate effective address
 		MemoryRead(1);
 		MB=MB+1;
 		MemoryWrite(MB);
@@ -114,6 +117,7 @@ while(my_memory[PC]!=12'hf02&&go==1'b1)
 		    PC=PC+1;
 		end
 	   DCA: begin
+		effectiveAddress();// to calculate effective address
 		MemoryWrite(AC);
 		AC=0;
 		end
@@ -203,7 +207,7 @@ endtask
 task initialize;
 integer temp,b;
 begin
-file = $fopen("CLA1.mem","r");
+file = $fopen("add01.mem","r");
 // checking if file is not empty or invalid
 if(file == `NULL) 
 	begin
@@ -211,7 +215,7 @@ if(file == `NULL)
 	end
 else 
 	begin	
-	$readmemh("CLA1.mem", my_memory);
+	$readmemh("add01.mem", my_memory);
 	/*for(i=0;i<4095;i=i+1)  // to display contents of memory
 	   begin
 	   if(my_memory[i]!==12'hxxx)
@@ -351,7 +355,7 @@ begin
 	if(CLA) AC = 12'b0;						// Priority (2)
 	if(OSR) AC = (AC | SR);						// Priority (3)
 	if(NOP) $display("NOP is encounter at PC = %h and Memory= %o",PC,my_memory[PC]);
-	if(HLT) go = 1'b1;						// Priority (3) //Assuming HLT should be executed as the last instruction 
+	if(HLT) go = 1'b0;						// Priority (3) //Assuming HLT should be executed as the last instruction 
 end
 endtask
 
