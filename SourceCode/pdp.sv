@@ -1,6 +1,20 @@
 //ONE FROM GITHUB
 `include "defines.v"
 module pdp();
+/*import "DPI-C" function void cfun_kcf(int,int);
+import "DPI-C" function void cfun_ksf(int,int);
+import "DPI-C" function void cfun_kcc(int,int);
+import "DPI-C" function void cfun_krs(int,int);
+import "DPI-C" function void cfun_krb(int,int);
+import "DPI-C" function void cfun_tfl(int,int);
+import "DPI-C" function void cfun_tsf(int,int);
+import "DPI-C" function void cfun_tcf(int,int);
+import "DPI-C" function void cfun_tpc(int,int);
+import "DPI-C" function void cfun_tls(int,int);
+import "DPI-C" function void cfun_skon(int,int);
+import "DPI-C" function void cfun_ion(int,int);
+import "DPI-C" function void cfun_iof(int,int);
+*/
 integer file,fileout;
 integer i;
 reg [0:31]a;
@@ -328,6 +342,20 @@ if(my_memory[PC] == i_TLS) begin TLS =1'b1; /* $display("TLS "); */ end
 if(my_memory[PC]== i_SKON) begin SKON=1'b1; /* $display("SKON"); */ end
 if(my_memory[PC] == i_ION) begin ION =1'b1; /* $display("ION "); */ end
 if(my_memory[PC] == i_IOF) begin IOF =1'b1; /* $display("IOF "); */ end
+/*if(KCF) cfun_kcf(int,int);
+if(KSF) cfun_ksf(int,int);
+if(KCC) cfun_kcc(int,int);
+if(KRS) cfun_krs(int,int);
+if(KRB) cfun_krb(int,int);
+if(TFL) cfun_tfl(int,int);
+if(TSF) cfun_tsf(int,int);
+if(TCF) cfun_tcf(int,int);
+if(TPC) cfun_tpc(int,int);
+if(TLS) cfun_tls(int,int);
+if(SKON) cfun_skon(int,int);
+if(ION) cfun_ion(int,int);
+if(IOF) cfun_iof(int,int);
+*/
                                    
 end
 endtask
