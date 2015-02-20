@@ -104,6 +104,7 @@ initialize();
 page=PC[0:4];
 offset=PC[5:11];
 go=1'b1;
+
 fileout=$fopen("output.txt","w");
 while(go==1'b1)
 	begin
