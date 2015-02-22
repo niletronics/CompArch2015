@@ -1,6 +1,6 @@
 task Grp3MicroInstruction();
 begin
-integer Grp3Cnt;
+static integer Grp3Cnt;
 if(my_memory[PC] == i_CLA ) begin	CLA =1'b1; $display("CLA"); end else CLA = 1'b0;
 if(my_memory[PC] == i_MQL ) begin	MQL =1'b1; $display("MQL"); end else MQL = 1'b0;
 if(my_memory[PC] == i_MQA ) begin	MQA =1'b1; $display("MQA"); end else MQA = 1'b0;
