@@ -137,9 +137,14 @@ while(go==1'b1)
 		AC=0;
 		end
 	   JMS: begin
+		effectiveAddress();
+		my_memory[CPMA]= PC+1;  //incrementing PC
+		PC= CPMA+1;
 		$display("works JMS");
 		end
 	   JMP: begin
+	    effectiveAddress();
+		PC=CPMA;
 		$display("works JMP");
 		end
 	   IO: begin
