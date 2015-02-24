@@ -1,6 +1,9 @@
 //ONE FROM GITHUB
 `include "defines.v"
 module pdp();
+
+`include "MemRef_JMP.sv"
+`include "MemRef_JMS.sv"
 /*import "DPI-C" function void cfun_kcf(int,int);
 import "DPI-C" function void cfun_ksf(int,int);
 import "DPI-C" function void cfun_kcc(int,int);
@@ -154,17 +157,14 @@ while(go==1'b1)
 		clk=clk+2;
 		end
 	   JMS: begin
-		c_jms=c_jms+1;
-		effectiveAddress();
-		my_memory[CPMA]= PC;  //not incrementing the PC by 1 bacuse we increnment it after the end of case after jmp instruction.
-		PC= CPMA;
+	   c_jms=c_jms+1;
+		MemoryRefJMS();// to calculate effective address
 		clk=clk+2;
 		$display("works JMS");
 		end
 	   JMP: begin
 		c_jmp=c_jmp+1;
-	    effectiveAddress();
-		PC=CPMA; 
+		MemoryRefJMP();		
 		clk=clk+1;
 		$display("works JMP");
 		end
@@ -179,13 +179,16 @@ while(go==1'b1)
 		clk=clk+1;
 		$display("PC is %o and AC is %d",PC,AC);
 		end
-		
+endcase
 
-
-
-
-	endcase
-	PC=PC+1;
+	if(IR == JMS) begin
+		PC = CPMA + 1;
+	end
+	else if (IR == JMP) begin
+		PC = CPMA + 1;
+	end
+	else begin
+		PC=PC+1;
 	end
 PC=PC-1;// As we are incrementing the PC after the instruction execution our PC gets incremented after hlt as well. So PC-1. 
 summary();
