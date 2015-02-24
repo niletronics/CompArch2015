@@ -1,9 +1,6 @@
 //ONE FROM GITHUB
 `include "defines.v"
 module pdp();
-
-`include "MemRef_JMP.sv"
-`include "MemRef_JMS.sv"
 /*import "DPI-C" function void cfun_kcf(int,int);
 import "DPI-C" function void cfun_ksf(int,int);
 import "DPI-C" function void cfun_kcc(int,int);
@@ -116,33 +113,37 @@ offset=PC[5:11];
 go=1'b1;
 
 fileout=$fopen("output.txt","w");
-while(go==1'b1)
+while(go==1'b1&&PC!=`EOMemory)
 	begin
 	//$display("%h",my_memory[PC]);
 	
-	MemoryRead(0);// 0 indicates that we are fetching instruction and we write 1 when we want data
+	MemoryRead(`instruction);// 0 indicates that we are fetching instruction and we write 1 when we want data
 	
 	case(IR)
 	   AND: begin
 		c_and=c_and+1;
 		effectiveAddress();// to calculate effective address
-		MemoryRead(1);// to get the contents of effective address
+		MemoryRead(`data);// to get the contents of effective address
 		AC=AC&MB;
 		clk=clk+2;
-		$display("PC is %o and AC is %d",PC,AC);
+		`ifdef SHOW
+		$display("PC is %o and AC is %o",PC,AC);
+		`endif
 		end
 	   TAD: begin
 		c_tad=c_tad+1;
 		effectiveAddress();// to calculate effective address
-		MemoryRead(1);
+		MemoryRead(`data);
 		{LinkBit,AC}={LinkBit,AC}+MB;
 		clk=clk+2;
-		$display("PC is %o and AC is %d",PC,AC);
+		`ifdef SHOW
+		$display("PC is %o and AC is %o",PC,AC);
+		`endif
 		end
 	   ISZ: begin
 		c_isz=c_isz+1;
 		effectiveAddress();// to calculate effective address
-		MemoryRead(1);
+		MemoryRead(`data);
 		MB=MB+1;
 		MemoryWrite(MB);
 		if(MB==0)
@@ -157,14 +158,15 @@ while(go==1'b1)
 		clk=clk+2;
 		end
 	   JMS: begin
-	   c_jms=c_jms+1;
-		MemoryRefJMS();// to calculate effective address
+	   	c_jms=c_jms+1;
+		effectiveAddress();	
+		MemoryWrite(PC+1);
 		clk=clk+2;
 		$display("works JMS");
 		end
 	   JMP: begin
 		c_jmp=c_jmp+1;
-		MemoryRefJMP();		
+		effectiveAddress();		
 		clk=clk+1;
 		$display("works JMP");
 		end
@@ -177,19 +179,18 @@ while(go==1'b1)
 		Group2MicroInstructions();
 		Group1MicroInstructions();
 		clk=clk+1;
-		$display("PC is %o and AC is %d",PC,AC);
+		`ifdef SHOW
+		$display("PC is %o and AC is %o",PC,AC);
+		`endif
 		end
 endcase
-
-	if(IR == JMS) begin
-		PC = CPMA + 1;
-	end
-	else if (IR == JMP) begin
-		PC = CPMA + 1;
-	end
-	else begin
-		PC=PC+1;
-	end
+if(IR==JMS)
+	PC=CPMA+1;
+else if(IR==JMP)
+	PC=CPMA;
+else
+	PC=PC+1;
+end
 PC=PC-1;// As we are incrementing the PC after the instruction execution our PC gets incremented after hlt as well. So PC-1. 
 summary();
 end
@@ -208,6 +209,7 @@ $display("No. of MICRO instructions:%d",c_micro);
 $display("No. of TOTAL instructions:%d",c_total);
 $display("total clock cycles required are %d",clk);
 $display("PC IS %o",PC);
+$display("Last state of accumulator is %o",AC);
 end
 
 endtask
@@ -275,8 +277,13 @@ endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------
 task initialize;
 integer temp,b;
+string file_name;
 begin
-file = $fopen("add01.mem","r");
+$value$plusargs("FILENAME=%s",file_name); // reading the file name from command line.
+	if(file_name == "")  // command to write in trancript to run: vsim pdp +FILENAME="yourFileName.txt" and then run.
+	$display("error- memory image file not provided please enter");
+	$display("Read file=",file_name);
+file = $fopen(file_name,"r");
 // checking if file is not empty or invalid
 if(file == `NULL) 
 	begin
@@ -483,22 +490,21 @@ if(CLA) AC = 12'b0;
 if(MQL) begin 
 	MQ [0:11] =  AC[0:11];
 	AC [0:11] = 12'b0;
-end
+	end
 if (MQA) AC = AC | MQ;
 if (SWP) begin
 	MQ <= AC;
 	AC <= MQ;
-end
+	end
 if (CAM) begin
 	AC [0:11] = 12'b0;
 	MQ [0:11] = 12'b0;
-end
+	end
 
 if(CLA || MQL || MQA || SWP || CAM )
 	Grp3Cnt++;
 else 
 	$display("Invalid Group 3 MircoInstruction at PC = %d \n Instruction = %o", PC, my_memory[PC]);
-
 end
 endtask
 
