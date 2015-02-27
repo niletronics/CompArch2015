@@ -291,7 +291,7 @@ if(file == `NULL)
 	end
 else 
 	begin	
-	$readmemh("add01.mem", my_memory);
+	$readmemh(file_name, my_memory);
 	/*for(i=0;i<4095;i=i+1)  // to display contents of memory
 	   begin
 	   if(my_memory[i]!==12'hxxx)
