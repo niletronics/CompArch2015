@@ -434,8 +434,8 @@ begin
 	//Condition checking for SubGroup
 	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup =1'b1; else ORSubgroup =1'b0;
 	$display("ORSubgroup %b", ORSubgroup);
-	if(SPA || SNA || SZA )	begin
-		if(((SPA && AC[0]==1'b0) || !SPA) && ((SNA && AC != 12'b0)||!SNA) && ((SZA && LinkBit==1'b0)||!SZA)) 
+	if(SPA || SNA || SZL )	begin
+		if(((SPA && AC[0]==1'b0) || !SPA) && ((SNA && AC != 12'b0)||!SNA) && ((SZL && LinkBit==1'b0)||!SZL)) 
 			ANDSubgroup =1'b1; 
 		else 
 			ANDSubgroup =1'b0;
