@@ -417,7 +417,8 @@ if(IOF) cfun_iof(int,int);
 end
 endtask
 //-----------------------------------------------------------------------------------------------------------------------------------------
-task Group2MicroInstructions;   
+task Group2MicroInstructions; 
+static integer  Grp2Cnt=0;
 begin
 	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	=1'b1; $display("SKP"); end else SKP	=1'b0;
 	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	=1'b1; $display("CLA"); end else CLA	=1'b0;
@@ -432,8 +433,8 @@ begin
 	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	=1'b1; $display("SZL"); end else SZL	=1'b0;
 	//Condition checking for SubGroup
 	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup =1'b1; else ORSubgroup =1'b0;
-	
-	if(SPA || SNA || SZA ))	begin
+	$display("ORSubgroup %b", ORSubgroup);
+	if(SPA || SNA || SZA )	begin
 		if(((SPA && AC[0]==1'b0) || !SPA) && ((SNA && AC != 12'b0)||!SNA) && ((SZA && LinkBit==1'b0)||!SZA)) 
 			ANDSubgroup =1'b1; 
 		else 
@@ -479,7 +480,7 @@ if(CLA) begin
 if(CLL) LinkBit = 1'b0;
 
 if(CMA) AC = ~AC;          // priority_2
-if(CML) LinkBit = ~LinkBit;
+if(CML) begin LinkBit = ~LinkBit; $display("linkbit %b", LinkBit); end
 
 if(IAC) AC= AC++;         // priority_3
 
