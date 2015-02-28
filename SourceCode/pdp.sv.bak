@@ -22,7 +22,7 @@ reg [0:31]a;
 reg [0:11]PC,MQ,MB,CPMA,SR;
 reg [0:11]AC;
 reg [0:2] IR;
-reg LinkBit,go;
+reg LinkBit,go,temp;
 reg [0:11] my_memory [0:4096];
 reg [0:4] page;
 reg [0:6] offset;
@@ -87,7 +87,7 @@ parameter AND = 3'd0,
       i_KRS = 12'o6034,					//Read Keyboard buffer Static A
       i_KRB = 12'o6036,					//Read Keyboard Buffer dynamic 
 //      --------------------Printer (CRT) - Device #4
-      i_TFL = 12'o6040,					//set prinTer FLag
+      i_TFL = 12'o6040,			 		//set prinTer FLag
       i_TSF = 12'o6041,					//Skip on prinTer Flag set
       i_TCF = 12'o6042,					//Clear prinTer Flag
       i_TPC = 12'o6044,					//load prinTer buffer with aCcu
@@ -134,8 +134,11 @@ while(go==1'b1&&PC!=`EOMemory)
 		c_tad=c_tad+1;
 		effectiveAddress();// to calculate effective address
 		MemoryRead(`data);
+		temp=LinkBit;
 		{LinkBit,AC}={LinkBit,AC}+MB;
 		clk=clk+2;
+		if(temp==LinkBit)
+		    $display("Overflow occured");
 		`ifdef SHOW
 		$display("PC is %o and AC is %o",PC,AC);
 		`endif
@@ -275,7 +278,7 @@ else
 end
 endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------
-task initialize
+task initialize;
 integer temp,b;
 string file_name;
 begin
