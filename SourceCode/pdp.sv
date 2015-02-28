@@ -428,16 +428,8 @@ begin
 	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	=1'b1; $display("SNA"); end else SNA	=1'b0;
 	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	=1'b1; $display("SZL"); end else SZL	=1'b0;
 	//Condition checking for SubGroup
-	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup =1'b1; else ORSubgroup =1'b0;
-	
-	if(SPA || SNA || SZA ))	begin
-		if(((SPA && AC[0]==1'b0) || !SPA) && ((SNA && AC != 12'b0)||!SNA) && ((SZA && LinkBit==1'b0)||!SZA)) 
-			ANDSubgroup =1'b1; 
-		else 
-			ANDSubgroup =1'b0;
-	end
-	else
-	ANDSubgroup =1'b0;
+	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup =1'b1;
+	if((SPA && AC[0]==1'b0) && (SNA && AC != 12'b0) && (SZA && LinkBit==1'b0)) ANDSubgroup =1'b1;
 	
 	if(ORSubgroup || ANDSubgroup || SKP) PC++; 						//OR SubGroup, later combining common case
 	//if(ANDSubgroup) PC++;						// AND SubGroup
@@ -446,12 +438,6 @@ begin
 	if(OSR) AC = (AC | SR);						// Priority (3)
 	if(NOP) $display("NOP is encounter at PC = %h and Memory= %o",PC,my_memory[PC]);
 	if(HLT) go = 1'b0;						// Priority (3) //Assuming HLT should be executed as the last instruction 
-	
-	if(SKP||CLA||OSR||HLT||SMA||SZA||SNL||NOP||SPA||SNA||SZL)
-		Grp2Cnt++;
-	else 
-		$display("Invalid Group2MicroInstructions : Instruction = %o and PC = %d",my_memory[PC],PC);
-	
 end
 endtask
 //-----------------------------------------------------------------------------------------------------------------------------------------
