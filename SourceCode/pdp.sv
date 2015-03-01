@@ -16,13 +16,13 @@ import "DPI-C" function void cfun_ion(int,int);
 import "DPI-C" function void cfun_iof(int,int);
 */
 integer file,fileout;
-integer i,clk,temp1,temp2;
+integer i,clk;
 integer c_and,c_tad,c_isz,c_dca,c_jms,c_jmp,c_io,c_micro,c_total;
 reg [0:31]a;
 reg [0:11]PC,MQ,MB,CPMA,SR;
 reg [0:11]AC;
 reg [0:2] IR;
-reg LinkBit,go;
+reg LinkBit,go,temp;
 reg [0:11] my_memory [0:4096];
 reg [0:4] page;
 reg [0:6] offset;
@@ -134,8 +134,11 @@ while(go==1'b1&&PC!=`EOMemory)
 		c_tad=c_tad+1;
 		effectiveAddress();// to calculate effective address
 		MemoryRead(`data);
+		temp=LinkBit;
 		{LinkBit,AC}={LinkBit,AC}+MB;
 		clk=clk+2;
+		if(temp!=LinkBit)
+		    $display("Overflow occured");
 		`ifdef SHOW
 		$display("PC is %o and AC is %o",PC,AC);
 		`endif
@@ -176,12 +179,8 @@ while(go==1'b1&&PC!=`EOMemory)
 		end
 	   M_INSTRUCTIONS: begin
 		c_micro=c_micro+1;
-		if(i_m[0]==0)
-		   Group1MicroInstructions();
-		else if(i_m[0]==1&&offset[6]==0)
-		   Group2MicroInstructions();
-		else if(i_m[0]==1&&offset[6]==0)
-		   Grp3MicroInstruction();
+		Group2MicroInstructions();
+		Group1MicroInstructions();
 		clk=clk+1;
 		`ifdef SHOW
 		$display("PC is %o and AC is %o",PC,AC);
@@ -418,8 +417,7 @@ if(IOF) cfun_iof(int,int);
 end
 endtask
 //-----------------------------------------------------------------------------------------------------------------------------------------
-task Group2MicroInstructions;  
-static integer Grp2Cnt;
+task Group2MicroInstructions;   
 begin
 	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	=1'b1; $display("SKP"); end else SKP	=1'b0;
 	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	=1'b1; $display("CLA"); end else CLA	=1'b0;
@@ -435,8 +433,8 @@ begin
 	//Condition checking for SubGroup
 	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup =1'b1; else ORSubgroup =1'b0;
 	
-	if(SPA || SNA || SZL )	begin
-		if(((SPA && AC[0]==1'b0) || !SPA) && ((SNA && AC != 12'b0)||!SNA) && ((SZL && LinkBit==1'b0)||!SZL)) 
+	if(SPA || SNA || SZA ))	begin
+		if(((SPA && AC[0]==1'b0) || !SPA) && ((SNA && AC != 12'b0)||!SNA) && ((SZA && LinkBit==1'b0)||!SZA)) 
 			ANDSubgroup =1'b1; 
 		else 
 			ANDSubgroup =1'b0;
