@@ -484,7 +484,7 @@ if(CLL) LinkBit = 1'b0;
 if(CMA) AC = ~AC;          // priority_2
 if(CML) LinkBit = ~LinkBit;
 
-if(IAC) AC= AC++;         // priority_3
+if(IAC) AC++;         // priority_3
 
 if(RAR) begin 
 	$display("RAR Executed AC Pre = %o", AC); 
