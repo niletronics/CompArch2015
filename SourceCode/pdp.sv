@@ -460,6 +460,7 @@ end
 endtask
 //-----------------------------------------------------------------------------------------------------------------------------------------
 task Group1MicroInstructions;
+reg LinkBitLocal;
 begin
 if(my_memory[PC] ==? 12'b111_000_000_000) begin	NOP = 1'b1; $display("NOP");end else NOP =1'b0;
 if(my_memory[PC] ==? 12'b111_01?_???_???) begin	CLA = 1'b1; $display("CLA");end else CLA =1'b0;
@@ -483,16 +484,41 @@ if(CLL) LinkBit = 1'b0;
 if(CMA) AC = ~AC;          // priority_2
 if(CML) LinkBit = ~LinkBit;
 
-if(IAC) AC= AC++;         // priority_3
+if(IAC) AC++;         // priority_3
 
-if(RAR) begin $display("RAR Executed AC Pre = %o", AC); LinkBit= AC [11]; AC = {LinkBit,AC[0:10]}; $display("RAR Executed AC Aftervalue = %o", AC);  end  //priority_4
-if(RAL) begin $display("RAL Executed AC Pre = %o", AC); LinkBit= AC [0];  AC = {AC[1:11],LinkBit}; $display("CLA Executed AC Aftervalue = %o", AC);  end
+if(RAR) begin 
+	$display("RAR Executed AC Pre = %o", AC); 
+	LinkBitLocal = AC [11]; 
+	AC = {LinkBit,AC[0:10]};
+	LinkBit = LinkBitLocal; 
+	$display("RAR Executed AC Aftervalue = %o", AC);  
+end  //priority_4
+
+if(RAL) begin 
+	$display("RAL Executed AC Pre = %o", AC); 
+	LinkBitLocal = AC [0];  
+	AC = {AC[1:11],LinkBit};
+	LinkBit = LinkBitLocal; 
+	$display("CLA Executed AC Aftervalue = %o", AC);
+end
               
-if(RTR) begin $display("RTR Executed AC Pre = %o", AC); LinkBit = AC [10]; AC = {AC[11], LinkBit, AC[0:9]}; end //priority_5
-if(RTL) begin $display("RTL Executed AC Pre = %o", AC); LinkBit = AC [1];  AC = {AC[2:11], LinkBit, AC[0]}; end   
+if(RTR) begin 
+	$display("RTR Executed AC Pre = %o", AC); 
+	LinkBitLocal = AC[10];
+	AC = {AC[11], LinkBit, AC[0:9]};
+	LinkBit = LinkBitLocal;
+end //priority_5
+
+if(RTL) begin
+	$display("RTL Executed AC Pre = %o", AC); 
+	LinkBitLocal = AC [1]; 
+	AC = {AC[2:11], LinkBit, AC[0]};
+	LinkBit = LinkBitLocal;
+end   
 
 end
 endtask
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------------
 task Grp3MicroInstruction();
