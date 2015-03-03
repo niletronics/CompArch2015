@@ -134,6 +134,8 @@ while(go==1'b1&&PC!=`EOMemory)
 		c_tad=c_tad+1;
 		effectiveAddress();// to calculate effective address
 		MemoryRead(`data);
+		if((AC < 12'd2047 && MB < 12'd2047 &&(AC+MB) > 12'd2047)||(AC > 12'd2047 && MB > 12'd2047 &&(AC+MB) < 12'd2048))
+		    $display("Overflow occured");
 		{LinkBit,AC}={LinkBit,AC}+MB;
 		clk=clk+2;
 		`ifdef SHOW
@@ -189,7 +191,7 @@ while(go==1'b1&&PC!=`EOMemory)
 		end
 endcase
 if(IR==JMS)
-	PC=CPMA+1;
+	PC=CPMA+1;// we have to write return address address as well.
 else if(IR==JMP)
 	PC=CPMA;
 else

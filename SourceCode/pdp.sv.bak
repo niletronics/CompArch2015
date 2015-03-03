@@ -189,7 +189,7 @@ while(go==1'b1&&PC!=`EOMemory)
 		end
 endcase
 if(IR==JMS)
-	PC=CPMA+1;
+	PC=CPMA+1;// we have to write return address address as well.
 else if(IR==JMP)
 	PC=CPMA;
 else
@@ -484,7 +484,7 @@ if(CLL) LinkBit = 1'b0;
 if(CMA) AC = ~AC;          // priority_2
 if(CML) LinkBit = ~LinkBit;
 
-if(IAC) AC= AC++;         // priority_3
+if(IAC) AC++;         // priority_3
 
 if(RAR) begin 
 	$display("RAR Executed AC Pre = %o", AC); 
@@ -518,6 +518,7 @@ end
 
 end
 endtask
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------------
 task Grp3MicroInstruction();
