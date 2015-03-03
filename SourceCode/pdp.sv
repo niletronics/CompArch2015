@@ -333,7 +333,8 @@ else if(i_m[0]==1)
 	if(offset>7'b0000111 && offset < 7'b0010000 && i_m[1]==0)
 	   begin
 		    clk=clk+1;
-	            CPMA= my_memory[my_memory[{5'b00000,offset}]+1];  	// 3 MEMORY ACCESS?????// confirm correctness
+	            CPMA= my_memory[{5'b00000,offset}]+1; // removed 1 my_memory 
+		    my_memory[{5'b00000,offset}]=my_memory[{5'b00000,offset}]+1;// confirm correctness.
 		    $fwrite(fileout,"%d %o \n",0,{5'b00000,offset});
 		    $fwrite(fileout,"%d %o \n",0,my_memory[{5'b00000,offset}]);
            end
