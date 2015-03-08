@@ -2,21 +2,6 @@
 `include "defines.v"
 module pdp();
 
-/*import "DPI-C" function void cfun_kcf(int,int);
-import "DPI-C" function void cfun_ksf(int,int);
-import "DPI-C" function void cfun_kcc(int,int);
-import "DPI-C" function void cfun_krs(int,int);
-import "DPI-C" function void cfun_krb(int,int);
-import "DPI-C" function void cfun_tfl(int,int);
-import "DPI-C" function void cfun_tsf(int,int);
-import "DPI-C" function void cfun_tcf(int,int);
-import "DPI-C" function void cfun_tpc(int,int);
-import "DPI-C" function void cfun_tls(int,int);
-import "DPI-C" function void cfun_skon(int,int);
-import "DPI-C" function void cfun_ion(int,int);
-import "DPI-C" function void cfun_iof(int,int);
-*/
-
 integer file,fileout,branchTraceFile,singleStepFile;
 integer i,clk,temp1,temp2;
 integer c_and,c_tad,c_isz,c_dca,c_jms,c_jmp,c_io,c_micro,c_total;	// To store counts
@@ -33,7 +18,8 @@ reg [0:1]  i_m;								// to store i and m bits of instruction
 string     instType = "";
 string     outcome = "";
 reg [0:11] targetPC;
-integer int_single_step;
+integer    int_single_step,step;
+
 //************************************************************************************** 
 //********************** Register Declaration for InputOutputInst ********************** 
 //**************************************************************************************
@@ -52,7 +38,7 @@ reg ION  = 1'b0;
 reg IOF  = 1'b0;
 reg KF 	 = 1'b0;
 reg TF	 = 1'b0;
-reg [0:7] keybuf = 8'd0;
+reg [0:7] keybuf  = 8'd0;
 reg [0:7] telebuf = 8'd0; 
 
 //************************************************************************************** 
@@ -79,14 +65,12 @@ reg SPA = 1'b0;					// Skip on Positive Accumulator (1)
 reg SNA = 1'b0;					// Skip on Nonzero Accumulator (1)
 reg SZL = 1'b0;					// Skip on Zero Link (1)
 reg SKP = 1'b0;					// SkiP always (1)
-//reg CLA = 1'b0;				// Clear Accumulator (2)
 reg OSR = 1'b0;					// Or Switch Register with accumulator (3)
 reg HLT = 1'b0;					// Halt (3)
 
 //************************************************************************************** 
 //*************** Group 3 Microinstructions (Bit 3 = 1, Bit 11 = 1) ********************
 //**************************************************************************************
-//reg CLA = 1'b0;				// Clear Accumulator (1)
 reg MQL = 1'b0;					// Load MQ register from AC and Clear AC (2); C(MQ) <- C(AC); C(AC) <- 0;
 reg MQA = 1'b0;					// Or AC with MQ register (2) ; C(AC) <- C(AC) Or C(MQ)
 reg SWP = 1'b0;					// Swap AC and MQ registers (3)
@@ -138,20 +122,22 @@ parameter AND = 3'd0,				// Memory reference instructions
 
 initial 
 begin
-	$display("------------ ISA Simulator ---------------");
-	initializeVariables();
-	initialize();
-	page=PC[0:4];
-	offset=PC[5:11];
-	go=1'b1;
+$display("------------ISA Simulator---------------");
+initializeVariables();
+initialize();
+page=PC[0:4];
+offset=PC[5:11];
+go=1'b1;
 
 	fileout=$fopen("output.txt","w");
 	branchTraceFile=$fopen("Branch_Trace.txt","w");
 	$fwrite(branchTraceFile,"Current PC \t Instruction \t Target PC \t Branch Outcome \n");
-	$fwrite(branchTraceFile,"--------------------------------------------------------------------------------------------\n");
+	$fwrite(branchTraceFile,"------------------------------------------------------------------------------------------\n");
+	$display("Do you want single stepping? Y/N :");
+	step = $fgetc('h8000_0000);
 	while(go==1'b1&&PC!=`EOMemory)
 	begin
-		//$display("%h",my_memory[PC]);
+	//$display("%h",my_memory[PC]);
 	
 		MemoryRead(`instruction);// 0 indicates that we are fetching instruction and we write 1 when we want data
 		int_JMS = 1'b0;
@@ -251,7 +237,7 @@ begin
 		    end
 		endcase
 
-	/*	`ifdef SHOW
+		`ifdef SHOW
 		if(ORSubgroup || ANDSubgroup || SKP)
 			$display("PC is %o and AC is %o",(PC-1'b1),AC);
 		else
@@ -264,11 +250,14 @@ begin
 		else if(IR==JMP) begin PC=CPMA;   end			
 		else 		 begin PC=PC+1;   end
 		
-		$display("Press any key to continue");		// Single stepping. Press ENTER to continue
-		int_single_step = $fgetc('h8000_0000);
+		if(step == "Y")
+		begin
+			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
+			int_single_step = $fgetc('h8000_0000);
+		end
 	end
 
-PC=PC-1;		// As we are incrementing the PC after the instruction execution our PC gets incremented after hlt as well. So PC-1. 
+//PC=PC-1;		// As we are incrementing the PC after the instruction execution our PC gets incremented after hlt as well. So PC-1. 
 summary();
 $fclose(fileout);
 $fclose(branchTraceFile);
@@ -279,19 +268,19 @@ end
 //========================================================================================================
 task summary;
 begin
-	c_total= c_and+c_tad+c_isz+c_dca+c_jms+c_jmp+c_io+c_micro;
-	$display("No. of AND instructions:%d",c_and);
-	$display("No. of TAD instructions:%d",c_tad);
-	$display("No. of ISZ instructions:%d",c_isz);
-	$display("No. of DCA instructions:%d",c_dca);
-	$display("No. of JMS instructions:%d",c_jms);
-	$display("No. of JMP instructions:%d",c_jmp);
-	$display("No. of IO instructions:%d",c_io);
-	$display("No. of MICRO instructions:%d",c_micro);
-	$display("No. of TOTAL instructions:%d",c_total);
-	$display("total clock cycles required are %d",clk);
-	$display("PC IS %o",PC);
-	$display("Last state of accumulator is %o",AC);
+c_total= c_and+c_tad+c_isz+c_dca+c_jms+c_jmp+c_io+c_micro;
+$display("No. of AND instructions:%d",c_and);
+$display("No. of TAD instructions:%d",c_tad);
+$display("No. of ISZ instructions:%d",c_isz);
+$display("No. of DCA instructions:%d",c_dca);
+$display("No. of JMS instructions:%d",c_jms);
+$display("No. of JMP instructions:%d",c_jmp);
+$display("No. of IO instructions:%d",c_io);
+$display("No. of MICRO instructions:%d",c_micro);
+$display("No. of TOTAL instructions:%d",c_total);
+$display("total clock cycles required are %d",clk);
+$display("PC IS %o",PC);
+$display("Last state of accumulator is %o",AC);
 end
 
 endtask
@@ -301,67 +290,52 @@ endtask
 //========================================================================================================
 task initializeVariables;
 begin
-	a = 0;
-	clk = 0;
-	c_and = 0; c_tad = 0; c_isz = 0; c_dca = 0; c_jms = 0; c_jmp = 0; c_io = 0; c_micro = 0; c_total = 0;
-	//PC = 0;
-	//MQ=0;
-	//MB=0;
-	//CPMA=0;
-	//SR=0;
-	//AC=0;
-	//IR=0;
-	//LinkBit=0;
-	//page=0;
-	//offset=0;
-	//i_m=0;
+a=0;
+clk=0;
+c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;
 end
 endtask
 //========================================================================================================
 //========================================= Address Calculation ==========================================
 //========================================================================================================
 task intaddress;
-
 input [0:31]a1;
 output decaddr;
 integer decaddr,x,y,z,flag,address;
-
 begin
-	flag=0;
-	if(a1[8:15]>47&&a1[8:15]<58)
-		x=48;
-	else if(a1[8:15]>64&&a1[8:15]<71)
-		x=55;
-	else if(a1[8:15]>96&&a1[8:15]<103)
-		x=87;
-	else
-		flag=1;
-
-	if(a1[16:23]>47&&a1[16:23]<58)
-		y=48;
-	else if(a1[16:23]>64&&a1[16:23]<71)
-		y=55;
-	else if(a1[16:23]>96&&a1[16:23]<103)
-		y=87;
-	else
-		flag=1;
-
-	if(a1[24:31]>47&&a1[24:31]<58)
-		z=48;
-	else if(a1[24:31]>64&&a1[24:31]<71)
-		z=55;
-	else if(a1[24:31]>96&&a1[24:31]<103)
-		z=87;
-	else
+flag=0;
+if(a1[8:15]>47&&a1[8:15]<58)
+	x=48;
+else if(a1[8:15]>64&&a1[8:15]<71)
+	x=55;
+else if(a1[8:15]>96&&a1[8:15]<103)
+	x=87;
+else
+	flag=1;
+if(a1[16:23]>47&&a1[16:23]<58)
+	y=48;
+else if(a1[16:23]>64&&a1[16:23]<71)
+	y=55;
+else if(a1[16:23]>96&&a1[16:23]<103)
+	y=87;
+else
+	flag=1;
+if(a1[24:31]>47&&a1[24:31]<58)
+	z=48;
+else if(a1[24:31]>64&&a1[24:31]<71)
+	z=55;
+else if(a1[24:31]>96&&a1[24:31]<103)
+	z=87;
+else
 	flag=1;
 
-	if(flag==0)
+if(flag==0)
 	begin
 	decaddr=((a1[8:15]-x)*256)+((a1[16:23]-y)*16)+(a1[24:31]-z);
 	//$display("dec address %d",decaddr);
 	end
-	else
-		decaddr=5000;// not a vaild address.
+else
+	decaddr=5000;// not a vaild address.
 	
 end
 endtask
@@ -369,16 +343,11 @@ endtask
 task initialize;
 integer temp,b;
 reg [500*8-1:0] file_name;
-//string file_name;
 begin
-//$value$plusargs("FILENAME=%s",file_name); // reading the file name from command line.
 $display("Enter file name :");
 b = $fgets(file_name, 'h8000_0000);
 file_name = file_name >> 8;
-//b = $fscanf(32'h8000_0000,"%s",file_name);
-	//if(file_name == "IO1.mem")  // command to write in trancript to run: vsim pdp +FILENAME="yourFileName.txt" and then run.
-	//$display("error- memory image file not provided please enter");
-	//$display("Read file=",file_name);
+
 file = $fopen(file_name,"r");
 // checking if file is not empty or invalid
 if(file == `NULL) 
@@ -525,30 +494,14 @@ if(TCF) TF = 1'b0;
 if(TPC) 
 begin
 	telebuf = AC[4:11];
-	$display("Printer output \'%c\' -- in octal %o",telebuf, telebuf);
+	$display("Printer output '%c' -- in octal %o",telebuf, telebuf);
 end
 if(TLS)
 begin
 	telebuf = AC[4:11];
 	TF = 1'b0;
-	$display("Printer output \'%c\' -- in octal %o",telebuf, telebuf);
-end
-
-/*if(KCF) cfun_kcf(int,int);
-if(KSF) cfun_ksf(int,int);
-if(KCC) cfun_kcc(int,int);
-if(KRS) cfun_krs(int,int);
-if(KRB) cfun_krb(int,int);
-if(TFL) cfun_tfl(int,int);
-if(TSF) cfun_tsf(int,int);
-if(TCF) cfun_tcf(int,int);
-if(TPC) cfun_tpc(int,int);
-if(TLS) cfun_tls(int,int);
-if(SKON) cfun_skon(int,int);
-if(ION) cfun_ion(int,int);
-if(IOF) cfun_iof(int,int);
-*/
-                                   
+	$display("Printer output '%c' -- in octal %o",telebuf, telebuf);
+end                                   
 end
 endtask
 //-----------------------------------------------------------------------------------------------------------------------------------------
@@ -740,11 +693,11 @@ begin
 
 	if(SMA || SZA || SNL || SPA || SNA || SZL || SKP || int_ISZ || KSF || TSF)
 	begin
-		$fwrite(branchTraceFile,"%o \t %12s \t %o \t %s \n",(PC-1'b1),instType,targetPC,outcome);
+		$fwrite(branchTraceFile,"%8o \t %8s \t %8o \t %8s \n",(PC-1'b1),instType,targetPC,outcome);
 	end
 	else if (int_JMP || int_JMS)
 	begin
-		$fwrite(branchTraceFile,"%o \t %12s \t %o \t %s \n",PC,instType,targetPC,outcome);
+		$fwrite(branchTraceFile,"%8o \t %8s \t %8o \t %8s \n",PC,instType,targetPC,outcome);
 	end
 end
 endtask
