@@ -10,7 +10,7 @@ reg [0:31] a;
 reg [0:11] PC,MQ,MB,CPMA,SR;
 reg [0:11] AC;
 reg [0:2]  IR;
-reg        LinkBit,go;
+reg        LinkBit,go,pc_inc;
 reg [0:11] my_memory [0:4096];
 reg [0:4]  page;
 reg [0:6]  offset;
@@ -138,7 +138,7 @@ go=1'b1;
 	while(go==1'b1&&PC!=`EOMemory)
 	begin
 	//$display("%h",my_memory[PC]);
-	
+		pc_inc=0;
 		MemoryRead(`instruction);// 0 indicates that we are fetching instruction and we write 1 when we want data
 		int_JMS = 1'b0;
 		int_JMP = 1'b0;
@@ -187,7 +187,7 @@ go=1'b1;
 			MB=MB+1;
 			MemoryWrite(MB);
 			if(MB==0)
-		    	PC=PC+1;
+		    		pc_inc=1'b1;			//FLAG FOR PC=PC+1;
 			clk=clk+2;
 			int_ISZ = 1'b1;
 			$display("ISZ");
@@ -201,7 +201,6 @@ go=1'b1;
 			clk=clk+2;
 			$display("DCA");
 		     end
-
 	   	JMS: begin
 	   		c_jms=c_jms+1;
 			effectiveAddress();	
@@ -238,9 +237,7 @@ go=1'b1;
 		endcase
 
 		`ifdef SHOW
-		if(ORSubgroup || ANDSubgroup || SKP)
-			$display("PC is %o and AC is %o",(PC-1'b1),AC);
-		else
+		
 			$display("PC is %o and AC is %o",PC,AC);
 		`endif
 
@@ -248,8 +245,8 @@ go=1'b1;
 
 		if(IR==JMS) 	 begin PC=CPMA+1; end		// Write return address
 		else if(IR==JMP) begin PC=CPMA;   end			
-		else 		 begin PC=PC+1;   end
-		
+		else if(pc_inc==1'b1)	begin PC=PC+2;   end
+		else PC=PC+1;
 		if(step == "Y")
 		begin
 			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
@@ -292,7 +289,7 @@ task initializeVariables;
 begin
 a=0;
 clk=0;
-c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;
+c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;pc_inc=0;
 end
 endtask
 //========================================================================================================
@@ -471,7 +468,7 @@ if(my_memory[PC] == i_IOF) begin IOF =1'b1; /* $display("IOF "); */ end else IOF
 
 // INPUT
 if(KCF) KF = 1'b0;
-if(KSF && KF) PC++;
+if(KSF && KF) pc_inc = 1'b1; else pc_inc = 1'b0;
 if(KCC) 
 begin
 	KF = 1'b0;
@@ -489,7 +486,7 @@ end
 
 //OUTPUT
 if(TFL) TF = 1'b1;
-if(TSF && TF) PC++;
+if(TSF && TF) pc_inc = 1'b1; else pc_inc = 1'b0;;
 if(TCF) TF = 1'b0;
 if(TPC) 
 begin
@@ -531,9 +528,9 @@ begin
 	else
 	ANDSubgroup =1'b0;	
 	
-	if(ORSubgroup || ANDSubgroup || SKP) PC++; 						//OR SubGroup, later combining common case
-	//if(ANDSubgroup) PC++;						// AND SubGroup
-	//if(SKP) PC++;							// Priority(1)
+	if(ORSubgroup || ANDSubgroup || SKP) pc_inc = 1'b1; else pc_inc = 1'b0;						//OR SubGroup, later combining common case
+	//if(ANDSubgroup) pc_inc = 1'b1; else pc_inc = 1'b0;;						// AND SubGroup
+	//if(SKP) pc_inc = 1'b1; else pc_inc = 1'b0;;							// Priority(1)
 	if(CLA) AC = 12'b0;						// Priority (2)
 	if(OSR) AC = (AC | SR);						// Priority (3)
 	if(NOP) $display("NOP is encounter at PC = %h and Memory= %o",PC,my_memory[PC]);
@@ -573,13 +570,15 @@ if(CML) LinkBit = ~LinkBit;
 
 if(IAC) begin
     
-    if((AC+1)>12'd2047)
+    if((AC+1)>12'd2047&&AC < 12'd2048)
     begin
     $display("Overflow occured");
-    LinkBit=~LinkBit;
+    AC=AC+1;
     end
     
-else if ((AC+1)<12'd2048) AC++;
+    else
+	AC++
+;
 
 end
 
@@ -684,16 +683,29 @@ begin
 	if(KSF) begin instType = "KSF"; end
 	if(TSF) begin instType = "TSF"; end
 
-	if(ORSubgroup ||ANDSubgroup || SKP || int_JMP || int_JMS || int_ISZ ||(KSF && KF) || (TSF && TF)) begin outcome = "TAKEN"; end
-	else begin outcome = "NOT TAKEN"; end
+	if(int_JMP || int_JMS || pc_inc) begin //"4Shalmalee" : Optimizing code and checking if PC was increament which means that the brach was taken
+		outcome = "TAKEN"; 
+	end
+	else begin 
+		outcome = "NOT TAKEN"; 
+	end
 
-	if(SMA || SZA || SNL || SPA || SNA || SZL || SKP || int_ISZ || KSF || TSF) begin targetPC = PC + 1'b1; end
-	else if(int_JMP) begin targetPC = CPMA;	     end
-	else if(int_JMS) begin targetPC = CPMA + 1'b1;  end
+	if(pc_inc) begin 
+		targetPC = PC + 2; 
+	end
+	else if(int_JMP) begin 
+		targetPC = CPMA;
+	end
+	else if(int_JMS) begin 
+		targetPC = CPMA + 1'b1;  
+	end
+	else if(SMA || SZA || SNL || SPA || SNA || SZL || ISZ || KSF || TSF) begin
+		targetPC = PC + 1;
+	end
 
 	if(SMA || SZA || SNL || SPA || SNA || SZL || SKP || int_ISZ || KSF || TSF)
 	begin
-		$fwrite(branchTraceFile,"%8o \t %8s \t %8o \t %8s \n",(PC-1'b1),instType,targetPC,outcome);
+		$fwrite(branchTraceFile,"%8o \t %8s \t %8o \t %8s \n",PC,instType,targetPC,outcome);
 	end
 	else if (int_JMP || int_JMS)
 	begin
