@@ -19,6 +19,7 @@ string     instType = "";
 string     outcome = "";
 reg [0:11] targetPC;
 integer    int_single_step,step;
+reg step_flag=1'b0;
 
 //************************************************************************************** 
 //********************** Register Declaration for InputOutputInst ********************** 
@@ -135,7 +136,15 @@ go=1'b1;
 	$fwrite(branchTraceFile,"------------------------------------------------------------------------------------------\n");
 	$display("Do you want single stepping? Y/N :");
 	step = $fgetc('h8000_0000);
+
 	while(go==1'b1&&PC!=`EOMemory)
+
+		if(step == "Y" || step == "y")
+		begin
+			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
+			int_single_step = $fgetc('h8000_0000);
+			step_flag=1'b1;
+		end
 	begin
 	//$display("%h",my_memory[PC]);
 		pc_inc=0;
@@ -236,12 +245,12 @@ go=1'b1;
 		    end
 		endcase
 
-		`ifdef SHOW
-		if(ORSubgroup || ANDSubgroup || SKP)
+		/*`ifdef SHOW
+		
 			$display("PC is %o and AC is %o",PC,AC);
-		else
+		`endif*/
+		if(step_flag)
 			$display("PC is %o and AC is %o",PC,AC);
-		`endif
 
 		branchTrace();
 
@@ -249,11 +258,7 @@ go=1'b1;
 		else if(IR==JMP) begin PC=CPMA;   end			
 		else if(pc_inc==1'b1)	begin PC=PC+2;   end
 		else PC=PC+1;
-		if(step == "Y")
-		begin
-			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
-			int_single_step = $fgetc('h8000_0000);
-		end
+		
 	end
 
 //PC=PC-1;		// As we are incrementing the PC after the instruction execution our PC gets incremented after hlt as well. So PC-1. 
@@ -292,6 +297,7 @@ begin
 a=0;
 clk=0;
 c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;pc_inc=0;
+step_flag=1'b0;
 end
 endtask
 //========================================================================================================
@@ -380,6 +386,7 @@ $display("PC is %d",PC);
 // initialize keyboard buffer with random value and set KF flag
 // mimic the keyboard input :-)
 keybuf	= $random;
+//keybuf = 8'd7;
 KF	= 1'b1;
 TF = 1'b1;
 end
@@ -400,7 +407,8 @@ else if(i_m[0]==1)
 	            CPMA= my_memory[{5'b00000,offset}]+1; // removed 1 my_memory 
 		    my_memory[{5'b00000,offset}]=my_memory[{5'b00000,offset}]+1;// confirm correctness.
 		    $fwrite(fileout,"%d %o \n",0,{5'b00000,offset});
-		    $fwrite(fileout,"%d %o \n",0,my_memory[{5'b00000,offset}]);
+		    $fwrite(fileout,"%d %o \n",1,{5'b00000,offset});		    
+		 
            end
         else
 	   begin
@@ -470,7 +478,7 @@ if(my_memory[PC] == i_IOF) begin IOF =1'b1; /* $display("IOF "); */ end else IOF
 
 // INPUT
 if(KCF) KF = 1'b0;
-if(KSF && KF) pc_inc = 1'b1; else pc_inc = 1'b0;
+if(KSF && KF) begin pc_inc = 1'b1; end
 if(KCC) 
 begin
 	KF = 1'b0;
@@ -478,17 +486,19 @@ begin
 end
 if(KRS)
 begin
+	$display("KRS : %o", keybuf);
 	AC[4:11] |= keybuf;
 end
 if(KRB)
 begin
+	$display("KRB : %o", keybuf);
 	AC = {4'h0,keybuf};
 	KF = 1'b0;
 end
 
 //OUTPUT
 if(TFL) TF = 1'b1;
-if(TSF && TF) pc_inc = 1'b1; else pc_inc = 1'b0;;
+if(TSF && TF) pc_inc = 1'b1; 
 if(TCF) TF = 1'b0;
 if(TPC) 
 begin
@@ -530,9 +540,7 @@ begin
 	else
 	ANDSubgroup =1'b0;	
 	
-	if(ORSubgroup || ANDSubgroup || SKP) pc_inc = 1'b1; else pc_inc = 1'b0;						//OR SubGroup, later combining common case
-	//if(ANDSubgroup) pc_inc = 1'b1; else pc_inc = 1'b0;;						// AND SubGroup
-	//if(SKP) pc_inc = 1'b1; else pc_inc = 1'b0;;							// Priority(1)
+	if(ORSubgroup || ANDSubgroup || SKP) pc_inc = 1'b1; 					//OR SubGroup, later combining common case						// Priority(1)
 	if(CLA) AC = 12'b0;						// Priority (2)
 	if(OSR) AC = (AC | SR);						// Priority (3)
 	if(NOP) $display("NOP is encounter at PC = %h and Memory= %o",PC,my_memory[PC]);
@@ -570,17 +578,12 @@ if(CLL) LinkBit = 1'b0;
 if(CMA) AC = ~AC;          // priority_2
 if(CML) LinkBit = ~LinkBit;
 
-if(IAC) begin
-    
+if(IAC) begin	
     if((AC+1)>12'd2047&&AC < 12'd2048)
     begin
     $display("Overflow occured");
-    AC=AC+1;
     end
-    
-    else
-	AC++
-;
+    {LinkBit,AC}={LinkBit,AC}+1'b1;
 
 end
 

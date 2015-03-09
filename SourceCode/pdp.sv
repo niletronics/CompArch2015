@@ -19,6 +19,7 @@ string     instType = "";
 string     outcome = "";
 reg [0:11] targetPC;
 integer    int_single_step,step;
+reg step_flag=1'b0;
 
 //************************************************************************************** 
 //********************** Register Declaration for InputOutputInst ********************** 
@@ -135,8 +136,16 @@ go=1'b1;
 	$fwrite(branchTraceFile,"------------------------------------------------------------------------------------------\n");
 	$display("Do you want single stepping? Y/N :");
 	step = $fgetc('h8000_0000);
+
 	while(go==1'b1&&PC!=`EOMemory)
 	begin
+		if(step == "Y" || step == "y")
+		begin
+			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
+			int_single_step = $fgetc('h8000_0000);
+			step_flag=1'b1;
+		end
+	
 	//$display("%h",my_memory[PC]);
 		pc_inc=0;
 		MemoryRead(`instruction);// 0 indicates that we are fetching instruction and we write 1 when we want data
@@ -163,7 +172,7 @@ go=1'b1;
 			//`ifdef SHOW
 			//$display("PC is %o and AC is %o",PC,AC);
 			//`endif
-			$display("AND");
+			if(step_flag) begin $display("AND"); end
 		     end
 
 	   	TAD: begin
@@ -177,7 +186,7 @@ go=1'b1;
 			//`ifdef SHOW
 			//$display("PC is %o and AC is %o",PC,AC);
 			//`endif
-			$display("TAD");
+			if(step_flag) begin $display("TAD"); end
 		     end
 
 	   	ISZ: begin
@@ -190,7 +199,7 @@ go=1'b1;
 		    		pc_inc=1'b1;			//FLAG FOR PC=PC+1;
 			clk=clk+2;
 			int_ISZ = 1'b1;
-			$display("ISZ");
+			if(step_flag) begin $display("ISZ"); end
 		     end
 
 	   	DCA: begin
@@ -199,7 +208,7 @@ go=1'b1;
 			MemoryWrite(AC);
 			AC=0;
 			clk=clk+2;
-			$display("DCA");
+			if(step_flag) begin $display("DCA"); end
 		     end
 	   	JMS: begin
 	   		c_jms=c_jms+1;
@@ -207,7 +216,7 @@ go=1'b1;
 			MemoryWrite(PC+1);
 			clk=clk+2;
 			int_JMS = 1'b1;
-			$display("JMS");
+			if(step_flag) begin $display("JMS"); end
 		     end
 
 	   	JMP: begin
@@ -215,13 +224,13 @@ go=1'b1;
 			effectiveAddress();		
 			clk=clk+1;
 			int_JMP = 1'b1;
-			$display("JMP");
+			if(step_flag) begin $display("JMP"); end
 		     end
 
 	   	IO: begin
 			c_io=c_io+1;
 			InputOutputInst();
-			$display("IO");
+			if(step_flag) begin $display("IO"); end
 		    end
 
 	   	M_INSTRUCTIONS: begin
@@ -236,10 +245,12 @@ go=1'b1;
 		    end
 		endcase
 
-		`ifdef SHOW
+		/*`ifdef SHOW
 		
 			$display("PC is %o and AC is %o",PC,AC);
-		`endif
+		`endif*/
+		if(step_flag)
+			$display("PC is %o and AC is %o",PC,AC);
 
 		branchTrace();
 
@@ -247,11 +258,7 @@ go=1'b1;
 		else if(IR==JMP) begin PC=CPMA;   end			
 		else if(pc_inc==1'b1)	begin PC=PC+2;   end
 		else PC=PC+1;
-		if(step == "Y")
-		begin
-			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
-			int_single_step = $fgetc('h8000_0000);
-		end
+		
 	end
 
 //PC=PC-1;		// As we are incrementing the PC after the instruction execution our PC gets incremented after hlt as well. So PC-1. 
@@ -290,6 +297,7 @@ begin
 a=0;
 clk=0;
 c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;pc_inc=0;
+step_flag=1'b0;
 end
 endtask
 //========================================================================================================
@@ -378,6 +386,7 @@ $display("PC is %d",PC);
 // initialize keyboard buffer with random value and set KF flag
 // mimic the keyboard input :-)
 keybuf	= $random;
+//keybuf = 8'd7;
 KF	= 1'b1;
 TF = 1'b1;
 end
@@ -398,7 +407,8 @@ else if(i_m[0]==1)
 	            CPMA= my_memory[{5'b00000,offset}]+1; // removed 1 my_memory 
 		    my_memory[{5'b00000,offset}]=my_memory[{5'b00000,offset}]+1;// confirm correctness.
 		    $fwrite(fileout,"%d %o \n",0,{5'b00000,offset});
-		    $fwrite(fileout,"%d %o \n",0,my_memory[{5'b00000,offset}]);
+		    $fwrite(fileout,"%d %o \n",1,{5'b00000,offset});		    
+		 
            end
         else
 	   begin
@@ -450,25 +460,25 @@ endtask
 task InputOutputInst;
 begin
 
-if(my_memory[PC] == i_KCF) begin KCF =1'b1; /* $display("KCF "); */ end else KCF = 1'b0;
-if(my_memory[PC] == i_KSF) begin KSF =1'b1; /* $display("KSF "); */ end else KSF = 1'b0;
-if(my_memory[PC] == i_KCC) begin KCC =1'b1; /* $display("KCC "); */ end else KCC = 1'b0;
-if(my_memory[PC] == i_KRS) begin KRS =1'b1; /* $display("KRS "); */ end else KRS = 1'b0;
-if(my_memory[PC] == i_KRB) begin KRB =1'b1; /* $display("KRB "); */ end else KRB = 1'b0;
-                         
-if(my_memory[PC] == i_TFL) begin TFL =1'b1; /* $display("TFL "); */ end else TFL = 1'b0;
-if(my_memory[PC] == i_TSF) begin TSF =1'b1; /* $display("TSF "); */ end else TSF = 1'b0;
-if(my_memory[PC] == i_TCF) begin TCF =1'b1; /* $display("TCF "); */ end else TCF = 1'b0;
-if(my_memory[PC] == i_TPC) begin TPC =1'b1; /* $display("TPC "); */ end else TPC = 1'b0;
-if(my_memory[PC] == i_TLS) begin TLS =1'b1; /* $display("TLS "); */ end else TLS = 1'b0;
-                         
-if(my_memory[PC]== i_SKON) begin SKON=1'b1; /* $display("SKON"); */ end else SKON = 1'b0;
-if(my_memory[PC] == i_ION) begin ION =1'b1; /* $display("ION "); */ end else ION = 1'b0;
-if(my_memory[PC] == i_IOF) begin IOF =1'b1; /* $display("IOF "); */ end else IOF = 1'b0;
+if(my_memory[PC] == i_KCF) begin KCF =1'b1; if(step_flag) $display("KCF "); end else KCF = 1'b0;
+if(my_memory[PC] == i_KSF) begin KSF =1'b1; if(step_flag) $display("KSF "); end else KSF = 1'b0;
+if(my_memory[PC] == i_KCC) begin KCC =1'b1; if(step_flag) $display("KCC "); end else KCC = 1'b0;
+if(my_memory[PC] == i_KRS) begin KRS =1'b1; if(step_flag) $display("KRS "); end else KRS = 1'b0;
+if(my_memory[PC] == i_KRB) begin KRB =1'b1; if(step_flag) $display("KRB "); end else KRB = 1'b0;
+                                                                            
+if(my_memory[PC] == i_TFL) begin TFL =1'b1; if(step_flag) $display("TFL "); end else TFL = 1'b0;
+if(my_memory[PC] == i_TSF) begin TSF =1'b1; if(step_flag) $display("TSF "); end else TSF = 1'b0;
+if(my_memory[PC] == i_TCF) begin TCF =1'b1; if(step_flag) $display("TCF "); end else TCF = 1'b0;
+if(my_memory[PC] == i_TPC) begin TPC =1'b1; if(step_flag) $display("TPC "); end else TPC = 1'b0;
+if(my_memory[PC] == i_TLS) begin TLS =1'b1; if(step_flag) $display("TLS "); end else TLS = 1'b0;
+                                                                            
+if(my_memory[PC]== i_SKON) begin SKON=1'b1; if(step_flag) $display("SKON"); end else SKON = 1'b0;
+if(my_memory[PC] == i_ION) begin ION =1'b1; if(step_flag) $display("ION "); end else ION = 1'b0;
+if(my_memory[PC] == i_IOF) begin IOF =1'b1; if(step_flag) $display("IOF "); end else IOF = 1'b0;
 
 // INPUT
 if(KCF) KF = 1'b0;
-if(KSF && KF) pc_inc = 1'b1; else pc_inc = 1'b0;
+if(KSF && KF) begin pc_inc = 1'b1; end
 if(KCC) 
 begin
 	KF = 1'b0;
@@ -476,28 +486,30 @@ begin
 end
 if(KRS)
 begin
+	//$display("KRS : %o", keybuf);
 	AC[4:11] |= keybuf;
 end
 if(KRB)
 begin
+	//$display("KRB : %o", keybuf);
 	AC = {4'h0,keybuf};
 	KF = 1'b0;
 end
 
 //OUTPUT
 if(TFL) TF = 1'b1;
-if(TSF && TF) pc_inc = 1'b1; else pc_inc = 1'b0;;
+if(TSF && TF) pc_inc = 1'b1; 
 if(TCF) TF = 1'b0;
 if(TPC) 
 begin
 	telebuf = AC[4:11];
-	$display("Printer output '%c' -- in octal %o",telebuf, telebuf);
+	$display("Printer output %o",telebuf);
 end
 if(TLS)
 begin
 	telebuf = AC[4:11];
 	TF = 1'b0;
-	$display("Printer output '%c' -- in octal %o",telebuf, telebuf);
+	$display("Printer output %o",telebuf);
 end                                   
 end
 endtask
@@ -505,17 +517,29 @@ endtask
 task Group2MicroInstructions;  
 static integer Grp2Cnt;
 begin
-	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	=1'b1; $display("SKP"); end else SKP	=1'b0;
-	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	=1'b1; $display("CLA"); end else CLA	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1??_???_1?0) begin	OSR	=1'b1; $display("OSR"); end else OSR	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1??_???_?10) begin	HLT	=1'b1; $display("HLT"); end else HLT	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	=1'b1; $display("SMA"); end else SMA	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	=1'b1; $display("SZA"); end else SZA	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	=1'b1; $display("SNL"); end else SNL	=1'b0;
-	if(my_memory[PC] ==  12'b111_100_000_000) begin	NOP	=1'b1; $display("NOP"); end else NOP	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	=1'b1; $display("SPA"); end else SPA	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	=1'b1; $display("SNA"); end else SNA	=1'b0;
-	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	=1'b1; $display("SZL"); end else SZL	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	=1'b1; $display("SKP"); end else SKP	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	=1'b1; $display("CLA"); end else CLA	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1??_???_1?0) begin	OSR	=1'b1; $display("OSR"); end else OSR	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1??_???_?10) begin	HLT	=1'b1; $display("HLT"); end else HLT	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	=1'b1; $display("SMA"); end else SMA	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	=1'b1; $display("SZA"); end else SZA	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	=1'b1; $display("SNL"); end else SNL	=1'b0;
+//	if(my_memory[PC] ==  12'b111_100_000_000) begin	NOP	=1'b1; $display("NOP"); end else NOP	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	=1'b1; $display("SPA"); end else SPA	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	=1'b1; $display("SNA"); end else SNA	=1'b0;
+//	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	=1'b1; $display("SZL"); end else SZL	=1'b0;
+
+	if(my_memory[PC] ==? 12'b111_1?0_001_??0) begin	SKP	=1'b1; if(step_flag) $display("SKP"); end else SKP	=1'b0;
+	if(my_memory[PC] ==? 12'b111_11?_???_??0) begin	CLA	=1'b1; if(step_flag) $display("CLA"); end else CLA	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_???_1?0) begin	OSR	=1'b1; if(step_flag) $display("OSR"); end else OSR	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_???_?10) begin	HLT	=1'b1; if(step_flag) $display("HLT"); end else HLT	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1?1_??0_??0) begin	SMA	=1'b1; if(step_flag) $display("SMA"); end else SMA	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_1?0_??0) begin	SZA	=1'b1; if(step_flag) $display("SZA"); end else SZA	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_?10_??0) begin	SNL	=1'b1; if(step_flag) $display("SNL"); end else SNL	=1'b0;
+	if(my_memory[PC] ==  12'b111_100_000_000) begin	NOP	=1'b1; if(step_flag) $display("NOP"); end else NOP	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1?1_??1_??0) begin	SPA	=1'b1; if(step_flag) $display("SPA"); end else SPA	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_1?1_??0) begin	SNA	=1'b1; if(step_flag) $display("SNA"); end else SNA	=1'b0;
+	if(my_memory[PC] ==? 12'b111_1??_?11_??0) begin	SZL	=1'b1; if(step_flag) $display("SZL"); end else SZL	=1'b0;
 	//Condition checking for SubGroup
 	if((SMA && AC[0]==1'b1) || (SZA && AC == 12'b0) || (SNL && LinkBit==1'b1)) ORSubgroup =1'b1; else ORSubgroup =1'b0;
 	
@@ -528,9 +552,7 @@ begin
 	else
 	ANDSubgroup =1'b0;	
 	
-	if(ORSubgroup || ANDSubgroup || SKP) pc_inc = 1'b1; else pc_inc = 1'b0;						//OR SubGroup, later combining common case
-	//if(ANDSubgroup) pc_inc = 1'b1; else pc_inc = 1'b0;;						// AND SubGroup
-	//if(SKP) pc_inc = 1'b1; else pc_inc = 1'b0;;							// Priority(1)
+	if(ORSubgroup || ANDSubgroup || SKP) pc_inc = 1'b1; 					//OR SubGroup, later combining common case						// Priority(1)
 	if(CLA) AC = 12'b0;						// Priority (2)
 	if(OSR) AC = (AC | SR);						// Priority (3)
 	if(NOP) $display("NOP is encounter at PC = %h and Memory= %o",PC,my_memory[PC]);
@@ -546,21 +568,22 @@ endtask
 task Group1MicroInstructions;
 reg LinkBitLocal;
 begin
-if(my_memory[PC] ==? 12'b111_000_000_000) begin	NOP = 1'b1; $display("NOP");end else NOP =1'b0;
-if(my_memory[PC] ==? 12'b111_01?_???_???) begin	CLA = 1'b1; $display("CLA");end else CLA =1'b0;
-if(my_memory[PC] ==? 12'b111_0?1_???_???) begin	CLL = 1'b1; $display("CLL");end else CLL =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_1??_???) begin	CMA = 1'b1; $display("CMA");end else CMA =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_?1?_???) begin	CML = 1'b1; $display("CML");end else CML =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_???_??1) begin	IAC = 1'b1; $display("IAC");end else IAC =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_??1_?0?) begin	RAR = 1'b1; $display("RAR");end else RAR =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_???_10?) begin	RAL = 1'b1; $display("RAL");end else RAL =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_??1_?1?) begin	RTR = 1'b1; $display("RTR");end else RTR =1'b0;
-if(my_memory[PC] ==? 12'b111_0??_???_11?) begin	RTL = 1'b1; $display("RTL");end else RTL =1'b0;
+if(my_memory[PC] ==? 12'b111_000_000_000) begin NOP = 1'b1;	if(step_flag) $display("NOP"); end else NOP =1'b0;
+if(my_memory[PC] ==? 12'b111_01?_???_???) begin CLA = 1'b1;	if(step_flag) $display("CLA"); end else CLA =1'b0;
+if(my_memory[PC] ==? 12'b111_0?1_???_???) begin CLL = 1'b1;	if(step_flag) $display("CLL"); end else CLL =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_1??_???) begin CMA = 1'b1;	if(step_flag) $display("CMA"); end else CMA =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_?1?_???) begin CML = 1'b1;	if(step_flag) $display("CML"); end else CML =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_???_??1) begin IAC = 1'b1;	if(step_flag) $display("IAC"); end else IAC =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_??1_?0?) begin RAR = 1'b1;	if(step_flag) $display("RAR"); end else RAR =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_???_10?) begin RAL = 1'b1;	if(step_flag) $display("RAL"); end else RAL =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_??1_?1?) begin RTR = 1'b1;	if(step_flag) $display("RTR"); end else RTR =1'b0;
+if(my_memory[PC] ==? 12'b111_0??_???_11?) begin RTL = 1'b1;	if(step_flag) $display("RTL"); end else RTL =1'b0;
 
 if(NOP) $display("NOP ENCOUNTERED AT PC = %o and my_memory[PC]=%o",PC,my_memory[PC]);
 if(CLA) begin
 	AC = 12'b0;        // priority_1
-	$display("CLA Executed CLA = %o", AC);
+ 	//$display("CLA Executed CLA = %o", AC);
+	if(step_flag) begin $display("CLA Executed CLA = %o", AC); end
         end
 
 if(CLL) LinkBit = 1'b0;
@@ -568,45 +591,40 @@ if(CLL) LinkBit = 1'b0;
 if(CMA) AC = ~AC;          // priority_2
 if(CML) LinkBit = ~LinkBit;
 
-if(IAC) begin
-    
+if(IAC) begin	
     if((AC+1)>12'd2047&&AC < 12'd2048)
     begin
     $display("Overflow occured");
-    AC=AC+1;
     end
-    
-    else
-	AC++
-;
+    {LinkBit,AC}={LinkBit,AC}+1'b1;
 
 end
 
 if(RAR) begin 
-	$display("RAR Executed AC Pre = %o", AC); 
+	if(step_flag) begin $display("RAR Executed AC Pre = %o", AC); end
 	LinkBitLocal = AC [11]; 
 	AC = {LinkBit,AC[0:10]};
 	LinkBit = LinkBitLocal; 
-	$display("RAR Executed AC Aftervalue = %o", AC);  
+	if(step_flag) begin $display("RAR Executed AC Aftervalue = %o", AC); end 
 end  //priority_4
 
 if(RAL) begin 
-	$display("RAL Executed AC Pre = %o", AC); 
+	if(step_flag) begin $display("RAL Executed AC Pre = %o", AC); end
 	LinkBitLocal = AC [0];  
 	AC = {AC[1:11],LinkBit};
 	LinkBit = LinkBitLocal; 
-	$display("CLA Executed AC Aftervalue = %o", AC);
+	if(step_flag) begin $display("CLA Executed AC Aftervalue = %o", AC); end
 end
               
 if(RTR) begin 
-	$display("RTR Executed AC Pre = %o", AC); 
+	if(step_flag) begin $display("RTR Executed AC Pre = %o", AC); end
 	LinkBitLocal = AC[10];
 	AC = {AC[11], LinkBit, AC[0:9]};
 	LinkBit = LinkBitLocal;
 end //priority_5
 
 if(RTL) begin
-	$display("RTL Executed AC Pre = %o", AC); 
+	if(step_flag) begin $display("RTL Executed AC Pre = %o", AC); end
 	LinkBitLocal = AC [1]; 
 	AC = {AC[2:11], LinkBit, AC[0]};
 	LinkBit = LinkBitLocal;
@@ -619,13 +637,13 @@ endtask
 //-----------------------------------------------------------------------------------------------------------------------------------------
 task Grp3MicroInstruction();
 begin
-integer Grp3Cnt;
-if(my_memory[PC] == i_CLA ) begin	CLA =1'b1; $display("CLA"); end else CLA = 1'b0;
-if(my_memory[PC] == i_MQL ) begin	MQL =1'b1; $display("MQL"); end else MQL = 1'b0;
-if(my_memory[PC] == i_MQA ) begin	MQA =1'b1; $display("MQA"); end else MQA = 1'b0;
-if(my_memory[PC] == i_SWP ) begin	SWP =1'b1; $display("SWP"); end else SWP = 1'b0;
-if(my_memory[PC] == i_CAM ) begin	CAM =1'b1; $display("CAM"); end else CAM = 1'b0;
-
+integer Grp3Cnt;                                             
+if(my_memory[PC] == i_CLA ) begin	CLA =1'b1; if(step_flag) $display("CLA"); end else CLA = 1'b0;
+if(my_memory[PC] == i_MQL ) begin	MQL =1'b1; if(step_flag) $display("MQL"); end else MQL = 1'b0;
+if(my_memory[PC] == i_MQA ) begin	MQA =1'b1; if(step_flag) $display("MQA"); end else MQA = 1'b0;
+if(my_memory[PC] == i_SWP ) begin	SWP =1'b1; if(step_flag) $display("SWP"); end else SWP = 1'b0;
+if(my_memory[PC] == i_CAM ) begin	CAM =1'b1; if(step_flag) $display("CAM"); end else CAM = 1'b0;
+                                                             
 if(CLA) AC = 12'b0;	
 if(MQL) begin 
 	MQ [0:11] =  AC[0:11];
