@@ -179,7 +179,7 @@ go=1'b1;
 			c_tad=c_tad+1;
 			effectiveAddress();	// to calculate effective address
 			MemoryRead(`data);
-			if((AC < 12'd2047 && MB < 12'd2047 &&(AC+MB) > 12'd2047)||(AC > 12'd2047 && MB > 12'd2047 &&(AC+MB) < 12'd2048))
+			if((AC < 12'd2048 && MB < 12'd2048 &&(AC+MB) > 12'd2047)||(AC > 12'd2047 && MB > 12'd2047 &&(AC+MB) < 12'd2048))
 		    		$display("Overflow occured");
 			{LinkBit,AC}={LinkBit,AC}+MB;
 			clk=clk+2;
@@ -298,6 +298,8 @@ a=0;
 clk=0;
 c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;pc_inc=0;
 step_flag=1'b0;
+AC=12'b0;
+LinkBit=1'b0;
 end
 endtask
 //========================================================================================================
@@ -450,7 +452,7 @@ endtask
 //---------------------------------------------------------------------------------------------------------------------------------------------
 task MemoryWrite;
 input reg [0:11] out_data; 
-begin
+ begin
 MB=out_data;
 my_memory[CPMA]=MB;
 $fwrite(fileout,"%d %o \n",1,CPMA);
@@ -625,7 +627,7 @@ end //priority_5
 
 if(RTL) begin
 	if(step_flag) begin $display("RTL Executed AC Pre = %o", AC); end
-	LinkBitLocal = AC [1]; 
+	LinkBitLocal = AC[1]; 
 	AC = {AC[2:11], LinkBit, AC[0]};
 	LinkBit = LinkBitLocal;
 end   
