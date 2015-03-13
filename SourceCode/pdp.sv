@@ -1,4 +1,16 @@
-//ONE FROM GITHUB
+// =======================================================================
+//   Department of Electrical and Computer Engineering
+//   Portland State University
+//
+//   Course name:  ECE 586 - Computer Architecture
+//   Term & Year:  Winter 2015
+//   Instructor :  Mark Faust
+//
+//   Project:      PDP8 Instruction Set Architecture Simulator
+//
+//   Filename:     pdp.sv
+// =======================================================================
+
 `include "defines.v"
 module pdp();
 
@@ -141,7 +153,7 @@ go=1'b1;
 	begin
 		if(step == "Y" || step == "y")
 		begin
-			$display("Press any key to continue");		// Single stepping. Press ENTER to continue
+			$display("Press any key to continue \n");		// Single stepping. Press ENTER to continue
 			int_single_step = $fgetc('h8000_0000);
 			step_flag = 1'b1;
 			
@@ -245,14 +257,9 @@ go=1'b1;
 		    end
 		endcase
 
-//		`ifdef SHOW
-//		
-//			$display("PC is %o and AC is %o",PC,AC);
-//		`endif
-
 		if(step_flag)
 		begin
-			$display("In octal PC is %o \t AC is %o \t LinkBit is %o ",PC,AC,LinkBit);
+			$display("In octal PC: %o \t AC: %o \t LinkBit: %o ",PC,AC,LinkBit);
 		end
 		branchTrace();
 
@@ -273,7 +280,7 @@ $fclose(branchTraceFile);
 end
 
 //========================================================================================================
-//This task summarizes individual counts for each instruction as well the total count for all instructions
+//========================================= Summary ======================================================
 //========================================================================================================
 task summary;
 begin
@@ -289,7 +296,7 @@ $display("No. of MICRO instructions :  \t %d",c_micro);
 $display("No. of TOTAL instructions :  \t %d",c_total);
 $display("Total clock cycles required :\t %d",clk);
 $display("PC IS %o",PC);
-$display("Last state of accumulator is %o",AC);
+$display("Last state of accumulator and LinkBit is %o and %o",AC,LinkBit);
 end
 
 endtask
@@ -315,31 +322,31 @@ input [0:31]a1;
 output decaddr;
 integer decaddr,x,y,z,flag,address;
 begin
-flag=0;
-if(a1[8:15]>47&&a1[8:15]<58)
-	x=48;
-else if(a1[8:15]>64&&a1[8:15]<71)
-	x=55;
-else if(a1[8:15]>96&&a1[8:15]<103)
-	x=87;
-else
-	flag=1;
-if(a1[16:23]>47&&a1[16:23]<58)
-	y=48;
-else if(a1[16:23]>64&&a1[16:23]<71)
-	y=55;
-else if(a1[16:23]>96&&a1[16:23]<103)
-	y=87;
-else
-	flag=1;
-if(a1[24:31]>47&&a1[24:31]<58)
-	z=48;
-else if(a1[24:31]>64&&a1[24:31]<71)
-	z=55;
-else if(a1[24:31]>96&&a1[24:31]<103)
-	z=87;
-else
-	flag=1;
+	flag=0;
+	if(a1[8:15]>47&&a1[8:15]<58)
+		x=48;
+	else if(a1[8:15]>64&&a1[8:15]<71)
+		x=55;
+	else if(a1[8:15]>96&&a1[8:15]<103)
+		x=87;
+	else
+		flag=1;
+	if(a1[16:23]>47&&a1[16:23]<58)
+		y=48;
+	else if(a1[16:23]>64&&a1[16:23]<71)
+		y=55;
+	else if(a1[16:23]>96&&a1[16:23]<103)
+		y=87;
+	else
+		flag=1;
+	if(a1[24:31]>47&&a1[24:31]<58)
+		z=48;
+	else if(a1[24:31]>64&&a1[24:31]<71)
+		z=55;
+	else if(a1[24:31]>96&&a1[24:31]<103)
+		z=87;
+	else
+		flag=1;
 
 if(flag==0)
 	begin
@@ -351,7 +358,11 @@ else
 	
 end
 endtask
-//---------------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//============================================= Initialize ===============================================
+//========================================================================================================
+
 task initialize;
 integer temp,b;
 reg [500*8-1:0] file_name;
@@ -388,7 +399,7 @@ else
 	   PC=128;
 	end
 $display("PC is %d",PC);
-// to do: close the filee.
+$fclose(file_name);
 
 // initialize keyboard buffer with random value and set KF flag
 // mimic the keyboard input :-)
@@ -398,7 +409,11 @@ KF	= 1'b1;
 TF = 1'b1;
 end
 endtask
-//---------------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//=================================== EffectiveAddress Calculation =======================================
+//========================================================================================================
+
 task effectiveAddress;
 begin
 if(i_m==2'b00)
@@ -433,37 +448,49 @@ else if(i_m[0]==1)
 	end
 end
 endtask
-//---------------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//============================================ Memory Read ===============================================
+//========================================================================================================
+
 task MemoryRead;
 input i;
 integer i;
 
 begin
-if(i==0)// instruction fetch
+	if(i==0)				// Instruction fetch
 	begin
-        IR=my_memory[PC][0:2];
-	i_m=my_memory[PC][3:4];
-	offset=my_memory[PC][5:11];// this offset will be used in effective address calculation
-	page=PC[0:4];
-	 $fwrite(fileout,"%d %o \n",2,PC);
+        	IR=my_memory[PC][0:2];
+		i_m=my_memory[PC][3:4];
+		offset=my_memory[PC][5:11];	// This offset will be used in effective address calculation
+		page=PC[0:4];
+	 	$fwrite(fileout,"%d %o \n",2,PC);
 	end
-else
-begin
-MB=my_memory[CPMA];
-$fwrite(fileout,"%d %o \n",0,CPMA);
-end
+	else
+	begin
+		MB=my_memory[CPMA];
+		$fwrite(fileout,"%d %o \n",0,CPMA);
+	end
 end
 endtask
-//---------------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//============================================ Memory Write ==============================================
+//========================================================================================================
+
 task MemoryWrite;
 input reg [0:11] out_data; 
 begin
-MB=out_data;
-my_memory[CPMA]=MB;
-$fwrite(fileout,"%d %o \n",1,CPMA);
+	MB=out_data;
+	my_memory[CPMA]=MB;
+	$fwrite(fileout,"%d %o \n",1,CPMA);
 end
 endtask
-//-----------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//====================================== Input Output Instructions =======================================
+//========================================================================================================
+
 task InputOutputInst;
 
 integer IO_char_handler;
@@ -487,50 +514,69 @@ if(my_memory[PC]== i_SKON) begin SKON=1'b1; if(step_flag) begin $display("SKON")
 if(my_memory[PC] == i_ION) begin ION =1'b1; if(step_flag) begin $display("ION "); end end else ION = 1'b0;
 if(my_memory[PC] == i_IOF) begin IOF =1'b1; if(step_flag) begin $display("IOF "); end end else IOF = 1'b0;
 
-// INPUT
-if(KCF) KF = 1'b0;
-if(KSF && KF) begin pc_inc = 1'b1; end
-if(KCC) 
-begin
-	KF = 1'b0;
-	AC = 12'b0;
-end
-if(KRS)
-begin
-	$display("Enter a character from keyboard :");
-	IO_char_handler = $fgets(IO_char, 'h8000_0000);
-	keybuf = IO_char_handler;
-	$display("KRS : %o", keybuf);
-	AC[4:11] |= keybuf;
-end
-if(KRB)
-begin
-	$display("Enter a character from keyboard :");
-	IO_char_handler = $fgets(IO_char, 'h8000_0000);
-	$display("KRB : %o", keybuf);
-	keybuf = IO_char_handler;
-	AC = {4'h0,keybuf};
-	KF = 1'b0;
-end
+	// INPUT
 
-//OUTPUT
-if(TFL) TF = 1'b1;
-if(TSF && TF) pc_inc = 1'b1; 
-if(TCF) TF = 1'b0;
-if(TPC) 
-begin
-	telebuf = AC[4:11];
-	$display("Printer output %o",telebuf);
-end
-if(TLS)
-begin
-	telebuf = AC[4:11];
-	TF = 1'b0;
-	$display("Printer output %o",telebuf);
-end                                   
+	if(KCF) KF = 1'b0;
+	if(KSF && KF) begin pc_inc = 1'b1; end
+
+	if(KCC) 
+	begin
+		KF = 1'b0;
+		AC = 12'b0;
+	end
+
+	if(KRS)
+	begin
+		$display("Enter a character from keyboard :");
+		$fflush('h8000_0000);
+		IO_char_handler = $fgetc('h8000_0000);
+		if(!step_flag) begin IO_char_handler = $fgetc('h8000_0000); end
+		keybuf = IO_char_handler;
+		if(step_flag) begin $display("KRS : %c", keybuf); end
+		AC[4:11] |= keybuf;
+	end
+
+	if(KRB)
+	begin
+		$display("Enter a character from keyboard :");
+		$fflush('h8000_0000);
+		IO_char_handler = $fgetc('h8000_0000);
+		if(!step_flag) begin IO_char_handler = $fgetc('h8000_0000); end
+		keybuf = IO_char_handler;
+		if(step_flag) begin $display("KRB : %c", keybuf); end
+		AC = {4'h0,keybuf};
+		KF = 1'b0;
+	end
+
+	//OUTPUT
+
+	if(TFL) TF = 1'b1;
+	if(TSF && TF) pc_inc = 1'b1; 
+	if(TCF) TF = 1'b0;
+
+	if(TPC) 
+	begin
+		telebuf = AC[4:11];
+		$display("*********************");
+		$display("PRINTER OUTPUT => \"%c\"",telebuf);
+		$display("*********************");
+	end
+
+	if(TLS)
+	begin
+		telebuf = AC[4:11];
+		TF = 1'b0;
+		$display("*********************");
+		$display("PRINTER OUTPUT => \"%c\"",telebuf);
+		$display("*********************");
+	end                                   
 end
 endtask
-//-----------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//======================================= Group 2 Microinstructions ======================================
+//========================================================================================================
+
 task Group2MicroInstructions;  
 static integer Grp2Cnt;
 begin
@@ -581,7 +627,11 @@ begin
 		$display("Invalid Group2MicroInstructions : Instruction = %o and PC = %d",my_memory[PC],PC);
 end
 endtask
-//-----------------------------------------------------------------------------------------------------------------------------------------
+
+//========================================================================================================
+//======================================= Group 1 Microinstructions ======================================
+//========================================================================================================
+
 task Group1MicroInstructions;
 reg LinkBitLocal;
 begin
@@ -596,11 +646,15 @@ if(my_memory[PC] ==? 12'b111_0??_???_10?) begin RAL = 1'b1;	if(step_flag) $displ
 if(my_memory[PC] ==? 12'b111_0??_??1_?1?) begin RTR = 1'b1;	if(step_flag) $display("RTR"); end else RTR =1'b0;
 if(my_memory[PC] ==? 12'b111_0??_???_11?) begin RTL = 1'b1;	if(step_flag) $display("RTL"); end else RTL =1'b0;
 
-if(NOP) $display("NOP ENCOUNTERED AT PC = %o and my_memory[PC]=%o",PC,my_memory[PC]);
-if(CLA) begin
-	AC = 12'b0;        // priority_1
- 	//$display("CLA Executed CLA = %o", AC);
-	if(step_flag) begin $display("CLA Executed CLA = %o", AC); end
+	if(NOP) $display("NOP ENCOUNTERED AT PC = %o and my_memory[PC]=%o",PC,my_memory[PC]);
+	if(CLA) 
+	begin
+		AC = 12'b0;        // priority_1
+ 		//$display("CLA Executed CLA = %o", AC);
+		if(step_flag) 
+		begin 
+			$display("CLA Executed CLA = %o", AC); 
+		end
         end
 
 if(CLL) LinkBit = 1'b0;
@@ -608,22 +662,24 @@ if(CLL) LinkBit = 1'b0;
 if(CMA) AC = ~AC;          // priority_2
 if(CML) LinkBit = ~LinkBit;
 
-if(IAC) begin	
-    if((AC+1)>12'd2047&&AC < 12'd2048)
-    begin
-    $display("Overflow occured");
-    end
-    {LinkBit,AC}={LinkBit,AC}+1'b1;
+	if(IAC) 
+	begin	
+    		if((AC+1)>12'd2047&&AC < 12'd2048)
+    		begin
+    			$display("Overflow occured");
+    		end
+    		{LinkBit,AC}={LinkBit,AC}+1'b1;
 
 end
 
-if(RAR) begin 
-	if(step_flag) begin $display("RAR Executed AC Pre = %o", AC); end
-	LinkBitLocal = AC [11]; 
-	AC = {LinkBit,AC[0:10]};
-	LinkBit = LinkBitLocal; 
-	if(step_flag) begin $display("RAR Executed AC Aftervalue = %o", AC); end 
-end  //priority_4
+	if(RAR) 
+	begin 
+		if(step_flag) begin $display("RAR Executed AC Pre = %o", AC); end
+		LinkBitLocal = AC [11]; 
+		AC = {LinkBit,AC[0:10]};
+		LinkBit = LinkBitLocal; 
+		if(step_flag) begin $display("RAR Executed AC Aftervalue = %o", AC); end 
+	end  //priority_4
 
 if(RAL) begin 
 	if(step_flag) begin $display("RAL Executed AC Pre = %o", AC); end
@@ -651,29 +707,35 @@ end
 endtask
 
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
+//========================================================================================================
+//======================================= Group 3 Microinstructions ======================================
+//========================================================================================================
+
 task Grp3MicroInstruction();
 begin
-integer Grp3Cnt;
-if(my_memory[PC] == i_CLA ) begin	CLA =1'b1; if(step_flag) begin $display("CLA"); end end else CLA = 1'b0;
-if(my_memory[PC] == i_MQL ) begin	MQL =1'b1; if(step_flag) begin $display("MQL"); end end else MQL = 1'b0;
-if(my_memory[PC] == i_MQA ) begin	MQA =1'b1; if(step_flag) begin $display("MQA"); end end else MQA = 1'b0;
-if(my_memory[PC] == i_SWP ) begin	SWP =1'b1; if(step_flag) begin $display("SWP"); end end else SWP = 1'b0;
-if(my_memory[PC] == i_CAM ) begin	CAM =1'b1; if(step_flag) begin $display("CAM"); end end else CAM = 1'b0;
+	integer Grp3Cnt;
+	if(my_memory[PC] == i_CLA ) begin	CLA =1'b1; if(step_flag) begin $display("CLA"); end end else CLA = 1'b0;
+	if(my_memory[PC] == i_MQL ) begin	MQL =1'b1; if(step_flag) begin $display("MQL"); end end else MQL = 1'b0;
+	if(my_memory[PC] == i_MQA ) begin	MQA =1'b1; if(step_flag) begin $display("MQA"); end end else MQA = 1'b0;
+	if(my_memory[PC] == i_SWP ) begin	SWP =1'b1; if(step_flag) begin $display("SWP"); end end else SWP = 1'b0;
+	if(my_memory[PC] == i_CAM ) begin	CAM =1'b1; if(step_flag) begin $display("CAM"); end end else CAM = 1'b0;
 
-if(CLA) AC = 12'b0;	
-if(MQL) begin 
-	MQ [0:11] =  AC[0:11];
-	AC [0:11] = 12'b0;
+	if(CLA) AC = 12'b0;	
+	if(MQL) 
+	begin 
+		MQ [0:11] =  AC[0:11];
+		AC [0:11] = 12'b0;
 	end
-if (MQA) AC = AC | MQ;
-if (SWP) begin
-	MQ <= AC;
-	AC <= MQ;
+	if (MQA) AC = AC | MQ;
+	if (SWP) 
+	begin
+		MQ <= AC;
+		AC <= MQ;
 	end
-if (CAM) begin
-	AC [0:11] = 12'b0;
-	MQ [0:11] = 12'b0;
+	if (CAM) 
+	begin
+		AC [0:11] = 12'b0;
+		MQ [0:11] = 12'b0;
 	end
 
 if(CLA || MQL || MQA || SWP || CAM )
@@ -683,9 +745,9 @@ else
 end
 endtask
 
-//********************************************************************
-//*************************** BRANCH TRACE ***************************
-//********************************************************************
+//========================================================================================================
+//=========================================== Branch Trace File ==========================================
+//========================================================================================================
 
 task branchTrace();
 begin
@@ -718,7 +780,7 @@ begin
 	if(KSF) begin instType = "KSF"; end
 	if(TSF) begin instType = "TSF"; end
 
-	if(int_JMP || int_JMS || pc_inc) begin //"4Shalmalee" : Optimizing code and checking if PC was increament which means that the brach was taken
+	if(int_JMP || int_JMS || pc_inc) begin 
 		outcome = "TAKEN"; 
 	end
 	else begin 
