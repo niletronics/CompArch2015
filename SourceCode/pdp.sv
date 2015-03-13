@@ -153,7 +153,7 @@ go=1'b1;
 	begin
 		if(step == "Y" || step == "y")
 		begin
-			$display("Press any key to continue \n");		// Single stepping. Press ENTER to continue
+			$display("Press enter key to continue \n");		// Single stepping. Press ENTER to continue
 			int_single_step = $fgetc('h8000_0000);
 			step_flag = 1'b1;
 			
@@ -712,6 +712,7 @@ endtask
 //========================================================================================================
 
 task Grp3MicroInstruction();
+reg [11:0]MQ_temp;
 begin
 	integer Grp3Cnt;
 	if(my_memory[PC] == i_CLA ) begin	CLA =1'b1; if(step_flag) begin $display("CLA"); end end else CLA = 1'b0;
@@ -729,8 +730,9 @@ begin
 	if (MQA) AC = AC | MQ;
 	if (SWP) 
 	begin
-		MQ <= AC;
-		AC <= MQ;
+		MQ_temp = AC;
+		AC = MQ;
+		MQ = MQ_temp;
 	end
 	if (CAM) 
 	begin
