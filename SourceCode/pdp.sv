@@ -22,7 +22,7 @@ reg [0:31] a;
 reg [0:11] PC,MQ,MB,CPMA,SR;
 reg [0:11] AC;
 reg [0:2]  IR;
-reg        LinkBit,go,pc_inc;
+reg        LinkBit,go,pc_inc,breakpt;
 reg [0:11] my_memory [0:4096];
 reg [0:4]  page;
 reg [0:6]  offset;
@@ -151,7 +151,13 @@ go=1'b1;
 
 	while(go==1'b1&&PC!=`EOMemory)
 	begin
-		if(step == "Y" || step == "y")
+		MemoryRead(`instruction);// 0 indicates that we are fetching instruction and we write 1 when we want data
+		if(IR==`bp)
+		begin
+			$display("branch encountered at PC=%o and has instruction opcode:%b",PC,IR);
+			breakpt=1'b1;
+		end
+		if(step == "Y" || step == "y"||breakpt)
 		begin
 			$display("Press enter key to continue \n");		// Single stepping. Press ENTER to continue
 			int_single_step = $fgetc('h8000_0000);
@@ -159,8 +165,7 @@ go=1'b1;
 			
 		end
 
-		pc_inc=0;
-		MemoryRead(`instruction);// 0 indicates that we are fetching instruction and we write 1 when we want data
+		pc_inc=0;		
 		int_JMS = 1'b0;
 		int_JMP = 1'b0;
 		int_ISZ = 1'b0;
@@ -308,6 +313,8 @@ task initializeVariables;
 begin
 a=0;
 clk=0;
+breakpt=0;
+MQ=0;
 c_and=0;c_tad=0;c_isz=0;c_dca=0;c_jms=0;c_jmp=0;c_io=0;c_micro=0;c_total=0;pc_inc=0;
 step_flag=1'b0;
 AC=12'b0;
@@ -746,7 +753,7 @@ else
 	$display("Invalid Group 3 MircoInstruction at PC = %d \n Instruction = %o", PC, my_memory[PC]);
 end
 if(step_flag) begin
-	$display("AC = %o, MQ = %o, LinkBit = %b, PC = %d ",AC,MQ,LinkBit,PC);
+	$display("AC = %o, MQ = %o, LinkBit = %b, PC = %o ",AC,MQ,LinkBit,PC);
 end 
 		
 endtask
@@ -817,3 +824,4 @@ begin
 end
 endtask
 endmodule
+
