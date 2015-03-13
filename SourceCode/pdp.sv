@@ -296,7 +296,7 @@ $display("No. of MICRO instructions :  \t %d",c_micro);
 $display("No. of TOTAL instructions :  \t %d",c_total);
 $display("Total clock cycles required :\t %d",clk);
 $display("PC IS %o",PC);
-$display("Last state of accumulator and LinkBit is %o and %o",AC,LinkBit);
+$display("Accumulator:%o and LinkBit:%o",AC,LinkBit);
 end
 
 endtask
@@ -743,6 +743,10 @@ if(CLA || MQL || MQA || SWP || CAM )
 else 
 	$display("Invalid Group 3 MircoInstruction at PC = %d \n Instruction = %o", PC, my_memory[PC]);
 end
+if(step_flag) begin
+	$display("AC = %o, MQ = %o, LinkBit = %b, PC = %d ",AC,MQ,LinkBit,PC);
+end 
+		
 endtask
 
 //========================================================================================================
@@ -811,4 +815,3 @@ begin
 end
 endtask
 endmodule
-
